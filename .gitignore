@@ -1,3 +1,6 @@
+# 開発環境用DB永続化用ディレクトリ
+database/data/*
+
 # Byte-compiled / optimized / DLL files
 __pycache__/
 *.py[cod]

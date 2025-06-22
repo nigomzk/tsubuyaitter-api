@@ -1,12 +1,44 @@
-version: '3'
+#version: '3'
 services:
   api:
     restart: always
     build: .
-    container_name: 'tsubuyaitter-api-redy'
+    container_name: 'tsubuyaitter-api'
     working_dir: '/app/'
     tty: true
     volumes:
       - .:/app
     ports:
       - "15000:5000"
+    networks:
+      - tsubuyaitter-backend
+    depends_on:
+       - db
+  db:
+    restart: always
+    build: ./database/
+    container_name: 'tsubuyaitter-db'
+    env_file:
+      - .env
+    environment:
+      POSTGRES_DB: ${POSTGRES_DB}
+      POSTGRES_USER: ${POSTGRES_USER}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+      POSTGRES_INITDB_ARGS: "--encoding=UTF-8 --locale=C"
+      DATABASE_NAME: ${DATABASE_NAME}
+      DATABASE_USER: ${DATABASE_USER}
+      DATABASE_PASSWORD: ${DATABASE_PASSWORD}
+    volumes:
+      - ./database/data:/var/lib/postgresql/data
+    ports: 
+      - "15432:5432"
+    networks:
+      - tsubuyaitter-backend
+networks:
+  tsubuyaitter-backend:
+    driver: bridge
+    driver_opts:
+      com.docker.network.bridge.name: "backend_bridge"
+    ipam:
+      config:
+        - subnet: "172.20.0.0/16"

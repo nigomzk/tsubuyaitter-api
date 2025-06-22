@@ -2,7 +2,7 @@ FROM python:3.13-slim-bookworm
 
 # enviroment settings.
 ENV LANG=C.UTF-8
-ENV TZ=Asia/Tokyoche/uv
+ENV TZ=Asia/Tokyo
 # 仮想環境を作成せずにパッケージをインストール
 ENV UV_PROJECT_ENVIRONMENT=/usr/local
 # Compile bytecode

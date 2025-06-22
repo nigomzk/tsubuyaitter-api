@@ -1,0 +1,9 @@
+##!/bin/sh
+
+CONN_CMD="psql -U ${POSTGRES_USER} ${POSTGRES_DB}"
+# application用DB作成
+$CONN_CMD -c "CREATE DATABASE ${DATABASE_NAME};"
+# application用ユーザー作成
+$CONN_CMD -c "CREATE USER ${DATABASE_USER} WITH PASSWORD '${DATABASE_PASSWORD}';"
+# application用ユーザーにapplication用DBの全権限を付与
+$CONN_CMD -c "GRANT ALL PRIVILEGES ON DATABASE ${DATABASE_NAME} To ${DATABASE_USER};"
