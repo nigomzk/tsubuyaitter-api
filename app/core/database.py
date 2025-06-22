@@ -1,7 +1,5 @@
-import asyncio
-from sqlalchemy.orm import sessionmaker
 from sqlalchemy.ext.declarative import declarative_base
-from sqlalchemy.ext.asyncio import async_scoped_session, create_async_engine, AsyncSession, AsyncEngine
+from sqlalchemy.ext.asyncio import create_async_engine, AsyncSession, AsyncEngine, async_sessionmaker
 from urllib.parse import quote_plus
 from app.core.config import get_settings
 
@@ -31,22 +29,17 @@ DATABASE_OPTION = {
 
 Base = declarative_base()
 
-def async_session(engine: AsyncEngine) -> AsyncSession:
-  async_session_factory = sessionmaker(
+engine: AsyncEngine = create_async_engine(DATABASE_URL, **DATABASE_OPTION)
+async_session: AsyncSession = async_sessionmaker(
+    engine, 
     autocommit=False,
     autoflush=False,
-    bind=engine,
-    class_=AsyncSession,
     expire_on_commit=True,
   )
-  # sessionのscope設定
-  return async_scoped_session(async_session_factory, scopefunc=asyncio.current_task)
 
-async def get_session() -> AsyncSession:
+async def get_session():
   """
   DB sessionを取得する
   """
-  async with async_session(
-    create_async_engine(DATABASE_URL, **DATABASE_OPTION)
-  ) as session:
+  async with async_session() as session:
     yield session
