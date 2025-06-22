@@ -1,0 +1,12 @@
+version: '3'
+services:
+  api:
+    restart: always
+    build: .
+    container_name: 'tsubuyaitter-api-redy'
+    working_dir: '/app/'
+    tty: true
+    volumes:
+      - .:/app
+    ports:
+      - "15000:5000"
