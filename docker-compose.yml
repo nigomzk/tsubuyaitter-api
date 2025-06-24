@@ -28,6 +28,9 @@ services:
       DATABASE_NAME: ${DATABASE_NAME}
       DATABASE_USER: ${DATABASE_USER}
       DATABASE_PASSWORD: ${DATABASE_PASSWORD}
+      TEST_DATABASE_NAME: ${TEST_DATABASE_NAME}
+      TEST_DATABASE_USER: ${TEST_DATABASE_USER}
+      TEST_DATABASE_PASSWORD: ${TEST_DATABASE_PASSWORD}
     volumes:
       - ./database/data:/var/lib/postgresql/data
     ports: 

@@ -18,7 +18,7 @@ async def issue_authcode_for_email(
 
   # authcode発行
   code: str = generate_authcode()
-  authcode: Authcode = await crud.insert_authcode(db, req, code)
+  authcode: Authcode = await crud.insert_authcode(db, req.email, code)
 
   # @TODO メール送信
 
