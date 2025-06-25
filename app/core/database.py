@@ -3,19 +3,18 @@ from sqlalchemy.ext.asyncio import create_async_engine, AsyncSession, AsyncEngin
 from urllib.parse import quote_plus
 from app.core.config import get_settings
 
-# 変数定義
-dialect: str = get_settings().DATABASE_DIALECT
-async_driver: str = get_settings().DATABASE_ASYNC_DRIVER
-driver: str = get_settings().DATABASE_DRIVER
-user: str = get_settings().DATABASE_USER
-password: str = quote_plus(get_settings().DATABASE_PASSWORD)
-host: str = get_settings().DATABASE_HOST
-port: str = get_settings().DATABASE_PORT
-db_name: str = get_settings().DATABASE_NAME
 # DB接続先URL
-DATABASE_URL = f"{dialect}+{async_driver}://{user}:{password}@{host}:{port}/{db_name}"
+DATABASE_URL = (
+    f"{get_settings().DATABASE_DIALECT}+{get_settings().DATABASE_ASYNC_DRIVER}://"
+    f"{get_settings().DATABASE_USER}:{quote_plus(get_settings().DATABASE_PASSWORD)}@"
+    f"{get_settings().DATABASE_HOST}:{get_settings().DATABASE_PORT}/{get_settings().DATABASE_NAME}"
+  )
 # マイグレーション用DB接続先URL
-MIGRATION_URL = f"{dialect}+{driver}://{user}:{password}@{host}:{port}/{db_name}" 
+MIGRATION_URL = (
+    f"{get_settings().DATABASE_DIALECT}+{get_settings().DATABASE_DRIVER}://"
+    f"{get_settings().DATABASE_USER}:{quote_plus(get_settings().DATABASE_PASSWORD)}@"
+    f"{get_settings().DATABASE_HOST}:{get_settings().DATABASE_PORT}/{get_settings().DATABASE_NAME}"
+  )
 # DBオプション設定
 DATABASE_OPTION = {
     "echo": get_settings().SQL_LOGGING,
