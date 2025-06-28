@@ -1,13 +1,14 @@
 import pytest_asyncio
 from httpx import ASGITransport, AsyncClient
-from sqlalchemy.ext.asyncio import create_async_engine, AsyncEngine, async_sessionmaker
+from sqlalchemy.ext.asyncio import create_async_engine, AsyncSession, AsyncEngine, async_sessionmaker
 from typing import AsyncGenerator, Any
 from urllib.parse import quote_plus
 from app.core.config import get_settings
 from app.core.database import DATABASE_OPTION, Base, get_session
 from app.main import app
 
-async def get_test_session():
+@pytest_asyncio.fixture(scope="function")
+async def get_test_session() -> AsyncGenerator[async_sessionmaker[AsyncSession], Any]:
   """
   テスト用のDB接続を取得する。
   """
@@ -28,16 +29,25 @@ async def get_test_session():
     await conn.run_sync(Base.metadata.drop_all)
     await conn.run_sync(Base.metadata.create_all)
 
-  async with async_session() as db:
-    yield db
+  yield async_session
 
-@pytest_asyncio.fixture(scope="session")
-async def async_client() -> AsyncGenerator[AsyncClient, Any]:
+@pytest_asyncio.fixture(scope="function")
+async def async_client(
+    get_test_session: async_sessionmaker[AsyncSession]
+  ) -> AsyncGenerator[AsyncClient, Any]:
   """
   テスト用の非同期HTTPクライアントを返却する。
   """
+
+  async def _override_get_session():
+    """
+    DI override用の関数
+    """
+    async with get_test_session() as session:
+      yield session
+  
   # DIでFastAPIのDBの向き先をテスト用DBに変更
-  app.dependency_overrides[get_session] = get_test_session
+  app.dependency_overrides[get_session] = _override_get_session
 
   # テスト用非同期HTTPクライアントを返却
   async with AsyncClient(transport=ASGITransport(app=app), base_url="http://test") as client:
