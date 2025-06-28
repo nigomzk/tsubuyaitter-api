@@ -1,6 +1,6 @@
 ##!/bin/sh
 
-CONN_CMD="psql -U ${POSTGRES_USER} ${POSTGRES_DB}"
+CONN_CMD="psql -U postgres"
 # application用DB作成
 $CONN_CMD -c "CREATE DATABASE ${DATABASE_NAME};"
 # application用ユーザー作成
@@ -8,9 +8,9 @@ $CONN_CMD -c "CREATE USER ${DATABASE_USER} WITH PASSWORD '${DATABASE_PASSWORD}';
 # application用DBのオーナーを変更
 $CONN_CMD -c "ALTER DATABASE ${DATABASE_NAME} OWNER TO ${DATABASE_USER};"
 
-# application用DB作成
+# test用DB作成
 $CONN_CMD -c "CREATE DATABASE ${TEST_DATABASE_NAME};"
 # test用ユーザー作成
 $CONN_CMD -c "CREATE USER ${TEST_DATABASE_USER} WITH PASSWORD '${TEST_DATABASE_PASSWORD}';"
-# application用DBのオーナーを変更
+# test用DBのオーナーを変更
 $CONN_CMD -c "ALTER DATABASE ${TEST_DATABASE_NAME} OWNER TO ${TEST_DATABASE_USER};"
