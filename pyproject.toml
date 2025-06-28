@@ -18,4 +18,5 @@ dependencies = [
 test = [
     "pytest<9.0.0,>=8.4.1",
     "pytest-asyncio<2.0.0,>=1.0.0",
+    "pytest-cov<7.0.0,>=6.2.1",
 ]
