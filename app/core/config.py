@@ -7,7 +7,7 @@ class Settings(BaseSettings):
   """
   model_config = SettingsConfigDict(
     env_file=".env",
-    env_file_encording="utf-8",
+    env_file_encoding="utf-8",
   )
 
   # 型チェック
@@ -40,4 +40,4 @@ def get_settings() -> Settings:
   """
   @lru_cacheで.envの結果をキャッシュする
   """
-  return Settings()
+  return Settings.model_validate({})

@@ -1,22 +1,23 @@
+from typing import AsyncGenerator, Any
 from sqlalchemy.orm import declarative_base
-from sqlalchemy.ext.asyncio import create_async_engine, AsyncSession, AsyncEngine, async_sessionmaker
+from sqlalchemy.ext.asyncio import create_async_engine, AsyncEngine, async_sessionmaker, AsyncSession
 from urllib.parse import quote_plus
 from app.core.config import get_settings
 
 # DB接続先URL
-DATABASE_URL = (
+DATABASE_URL: str = (
     f"{get_settings().DATABASE_DIALECT}+{get_settings().DATABASE_ASYNC_DRIVER}://"
     f"{get_settings().DATABASE_USER}:{quote_plus(get_settings().DATABASE_PASSWORD)}@"
     f"{get_settings().DATABASE_HOST}:{get_settings().DATABASE_PORT}/{get_settings().DATABASE_NAME}"
   )
 # マイグレーション用DB接続先URL
-MIGRATION_URL = (
+MIGRATION_URL: str = (
     f"{get_settings().DATABASE_DIALECT}+{get_settings().DATABASE_DRIVER}://"
     f"{get_settings().DATABASE_USER}:{quote_plus(get_settings().DATABASE_PASSWORD)}@"
     f"{get_settings().DATABASE_HOST}:{get_settings().DATABASE_PORT}/{get_settings().DATABASE_NAME}"
   )
 # DBオプション設定
-DATABASE_OPTION = {
+DATABASE_OPTION: dict[str, bool | int] = {
     "echo": get_settings().SQL_LOGGING,
     "echo_pool": get_settings().SQL_LOGGING,
     "pool_size": get_settings().DATABASE_POOL_SIZE,
@@ -29,14 +30,14 @@ DATABASE_OPTION = {
 Base = declarative_base()
 
 engine: AsyncEngine = create_async_engine(DATABASE_URL, **DATABASE_OPTION)
-async_session: AsyncSession = async_sessionmaker(
+async_session = async_sessionmaker(
     engine, 
     autocommit=False,
     autoflush=False,
     expire_on_commit=True,
   )
 
-async def get_session():
+async def get_session() -> AsyncGenerator[AsyncSession, Any]:
   """
   DB sessionを取得する
   """

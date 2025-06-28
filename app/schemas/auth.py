@@ -1,5 +1,4 @@
 from pydantic import BaseModel, EmailStr, Field
-from datetime import datetime
 
 class RequestIssueAuthcodeForEmail(BaseModel):
   """
@@ -12,4 +11,4 @@ class ResponseIssueAuthcodeForEmail(BaseModel):
   メール認証コード発行レスポンス
   """
   authcode_id: str = Field(..., min_length=1, max_length=36, title="認証コードID")
-  expire_datetime: datetime = Field(..., title="有効期限")
+  expire_datetime: str = Field(..., title="有効期限")

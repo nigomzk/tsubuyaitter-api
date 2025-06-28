@@ -1,7 +1,8 @@
 import pytest
+from httpx import AsyncClient
 
 @pytest.mark.asyncio
-async def test_issue_authcode_for_email(async_client):
+async def test_issue_authcode_for_email(async_client: AsyncClient):
   email = "test@sample.com"
   response = await async_client.post(
       "/auth/email/issue-authcode",

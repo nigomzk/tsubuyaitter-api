@@ -21,8 +21,9 @@ async def issue_authcode_for_email(
   authcode: Authcode = await crud.insert_authcode(db, req.email, code)
 
   # @TODO メール送信
+  str(authcode.expire_datetime)
 
   return ResponseIssueAuthcodeForEmail(
-      authcode_id=authcode.authcode_id,
-      expire_datetime=authcode.expire_datetime
+      authcode_id=str(authcode.authcode_id),
+      expire_datetime=str(authcode.expire_datetime)
     )

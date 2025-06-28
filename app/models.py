@@ -1,9 +1,7 @@
 import uuid
 from sqlalchemy import Column, String, DateTime, Boolean
 from sqlalchemy.ext.declarative import declared_attr
-from sqlalchemy.orm import declarative_base
 from datetime import datetime, timedelta
-from datetime import datetime
 from app.core.config import get_settings
 from app.core.database import Base
 

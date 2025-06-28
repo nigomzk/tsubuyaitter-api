@@ -1,6 +1,7 @@
 import pytest_asyncio
 from httpx import ASGITransport, AsyncClient
-from sqlalchemy.ext.asyncio import create_async_engine, AsyncSession, AsyncEngine, async_sessionmaker
+from sqlalchemy.ext.asyncio import create_async_engine, AsyncEngine, async_sessionmaker
+from typing import AsyncGenerator, Any
 from urllib.parse import quote_plus
 from app.core.config import get_settings
 from app.core.database import DATABASE_OPTION, Base, get_session
@@ -16,7 +17,7 @@ async def get_test_session():
     f"{get_settings().DATABASE_HOST}:{get_settings().DATABASE_PORT}/{get_settings().TEST_DATABASE_NAME}"
   )
   engine: AsyncEngine = create_async_engine(db_uri, **DATABASE_OPTION)
-  async_session: AsyncSession = async_sessionmaker(
+  async_session = async_sessionmaker(
     engine, 
     autocommit=False,
     autoflush=False,
@@ -31,7 +32,7 @@ async def get_test_session():
     yield db
 
 @pytest_asyncio.fixture(scope="session")
-async def async_client() -> AsyncClient:
+async def async_client() -> AsyncGenerator[AsyncClient, Any]:
   """
   テスト用の非同期HTTPクライアントを返却する。
   """
