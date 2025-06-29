@@ -8,6 +8,7 @@ services:
     tty: true
     volumes:
       - .:/app
+      - ./.vscode/extensions:/root/.vscode-server/extensions
     ports:
       - "15000:5000"
     networks:

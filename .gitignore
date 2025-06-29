@@ -1,3 +1,6 @@
+# 開発環境用vscode設定永続化用ディレクトリ
+.vscode/extensions
+
 # 開発環境用DB永続化用ディレクトリ
 database/data/*
 

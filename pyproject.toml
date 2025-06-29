@@ -15,8 +15,53 @@ dependencies = [
 ]
 
 [dependency-groups]
+lint = [
+    "ruff<1.0.0,>=0.12.1",
+]
 test = [
     "pytest<9.0.0,>=8.4.1",
     "pytest-asyncio<2.0.0,>=1.0.0",
     "pytest-cov<7.0.0,>=6.2.1",
 ]
+
+[tool.ruff]
+# 除外するディレクトリ
+exclude = [
+    ".git",               # Gitリポジトリ
+    ".pytest_cache",      # pytestのキャッシュディレクトリ
+    ".ruff_cache",        # Ruffのキャッシュディレクトリ
+    ".vscode",            # VSCodeの設定ディレクトリ
+    "alembic",            # migration用ディレクトリ
+]
+line-length = 100
+indent-width = 4
+target-version = "py313"
+preview = true
+
+[tool.ruff.lint]
+select = [
+    "E",    # pycodestyle errors
+    "W",    # pycodestyle warnings
+    "F",    # pyflakes
+    "I",    # isort
+    "B",    # flake8-bugbear
+    "C4",   # flake8-comprehensions
+    "UP",   # pyupgrade
+]
+ignore = [
+    "B008",  # do not perform function calls in argument defaults
+]
+# すべてのルールに対して自動修正を許可
+fixable = ["ALL"]
+unfixable = []
+# アンダースコアで始まる変数は未使用変数として扱わない
+dummy-variable-rgx = "^(_+|(_+[a-zA-Z0-9_]*[a-zA-Z0-9]+?))$"
+
+[tool.ruff.lint.isort]
+known-third-party = ["fastapi", "pydantic", "starlette"]
+
+[tool.ruff.format]
+quote-style = "double"
+indent-style = "space"
+skip-magic-trailing-comma = false
+line-ending = "auto"

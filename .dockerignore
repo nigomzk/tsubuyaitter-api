@@ -4,5 +4,11 @@ app.egg-info
 *.pyc
 .mypy_cache
 .coverage
+.pytest_cache
+.ruff_cache
 htmlcov
 .venv
+
+# 永続化用ディレクトリ
+.vscode/extensions
+database

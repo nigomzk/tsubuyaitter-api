@@ -1,0 +1,46 @@
+{
+  "name": "tsubuyaitter-api VScode",
+  "dockerComposeFile": "../docker-compose.yml",
+  "service": "api",
+  "workspaceFolder": "/app",
+  "customizations": {
+    "vscode": {
+      "extensions": [
+        "ms-python.python",
+        "ms-python.debugpy",
+        "ms-python.vscode-pylance",
+        "charliermarsh.ruff",
+        "njpwerner.autodocstring",
+        "MS-CEINTL.vscode-language-pack-ja"
+      ],
+      "settings": {
+        "extensions.verifySignature": false,
+        "[python]": {
+          "editor.insertSpaces": true,
+          "editor.tabSize": 4,
+          "editor.defaultFormatter": "charliermarsh.ruff",
+          "editor.formatOnSave": true,
+          "editor.codeActionsOnSave": {
+            "source.fixAll": "explicit",
+            "source.organizeImports": "explicit"
+          }
+        },
+        // Pylance設定
+        "python.analysis.typeCheckingMode": "strict",
+        // テスト設定
+        "python.testing.unittestEnabled": false,
+        "python.testing.pytestEnabled": true,
+        "python.testing.autoTestDiscoverOnSaveEnabled": true,
+        "python.testing.pytestArgs": [
+          "--cov=app",
+          "--cov-report",
+          "xml"
+        ],
+        // エディタ上のカバレッジ表示設定
+        "coverage-gutters.showGutterCoverage": true,
+        "coverage-gutters.showLineCoverage": true,
+        "coverage-gutters.showRulerCoverage": true
+      }
+    }
+  }
+}
