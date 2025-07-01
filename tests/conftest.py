@@ -1,4 +1,5 @@
 from collections.abc import AsyncGenerator
+from datetime import datetime
 from typing import Any
 from urllib.parse import quote_plus
 
@@ -14,6 +15,7 @@ from sqlalchemy.ext.asyncio import (
 from app.core.config import get_settings
 from app.core.database import DATABASE_OPTION, Base, get_session
 from app.main import app
+from app.models import Authcode
 
 
 @pytest_asyncio.fixture(scope="function")
@@ -64,3 +66,20 @@ async def async_client(
     # テスト用非同期HTTPクライアントを返却
     async with AsyncClient(transport=ASGITransport(app=app), base_url="http://test") as client:
         yield client
+
+
+@pytest_asyncio.fixture(scope="function")
+async def insert_test_data_authcode(get_test_session: async_sessionmaker[AsyncSession]) -> None:
+    """ """
+    data = [
+        Authcode(
+            authcode_id=f"00000000-0000-0000-0000-00000000000{i}",
+            code=f"12345{i}",
+            email=f"test{i}@sample.com",
+            expire_datetime=datetime.strptime(f"2025-07-01 23:59:59.99{i}", "%Y-%m-%d %H:%M:%S.%f"),
+        )
+        for i in range(1, 4)
+    ]
+    async with get_test_session() as db:
+        db.add_all(data)
+        await db.commit()
