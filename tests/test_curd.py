@@ -4,6 +4,7 @@ from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker
 
 from app import crud
 from app.models import Authcode
+from app.schemas import auth
 
 
 @pytest.mark.asyncio
@@ -39,7 +40,7 @@ async def test_insert_authcode(get_test_session: async_sessionmaker[AsyncSession
     ["authcode_id", "expected_hit", "expected_code", "expected_expire_datetime"],
     [
         pytest.param(
-            "00000000-0000-0000-0000-000000000001", True, "123451", "2025-07-01 23:59:59.991000"
+            "00000000-0000-0000-0000-000000000001", True, "123451", "2025-07-01 00:01:00.999999"
         ),
         pytest.param("00000000-0000-0000-0000-000000000099", False, None, None),
     ],
@@ -53,25 +54,38 @@ async def test_select_authcode_by_id(
     expected_expire_datetime: str | None,
 ) -> None:
     """
-    以下観点でselect_authcode_by_idのテストを行う
+    select_authcode_by_idについて以下ケースを検証する
 
-    ・authcode_idに一致するデータが存在する場合、1件データを取得できること
+    +----+---+---+
+    | No | authcode_id一致 | 取得件数(期待結果) |
+    +====+===+===+
+    | 1 | o | 1 |
+    +----+---+---+
+    | 2 | x | 0 |
+    +----+---+---+
 
-    ・authcode_idに一致するデータが存在しない場合、データを取得できないこと
-
-    Args:
-        get_test_session (async_sessionmaker[AsyncSession]): テスト用DBセッション
-        insert_test_data_authcode (None): テストデータ投入処理
-        authcode_id (str): 認証コードID
-        expected_hit (bool): データの存在有無
-        expected_code (str | None): コード値
-        expected_expire_datetime (str | None): 有効期限日時
+    Parameters
+    ----------
+    get_test_session: sqlalchemy.ext.asyncio.async_sessionmaker[AsyncSession]
+        テスト用DBセッション
+    insert_test_data_authcod: None
+        テストデータ投入処理
+    authcode_id: str
+        認証コードID
+    expected_hit: bool
+        データの存在有無
+    expected_code: str | None
+        認証コード
+    expected_expire_datetime: str | None
+        有効期限日時
     """
+
+    data = auth.AuthcodeRead(authcode_id=authcode_id)
     async with get_test_session() as db:
-        result = await crud.select_authcode_by_id(db, authcode_id)
+        result = await crud.select_authcode_by_id(db, data)
         if expected_hit:
             assert result is not None
-            assert str(result.code) == expected_code
+            assert result.code == expected_code
             assert str(result.expire_datetime) == expected_expire_datetime
         else:
             assert result is None
