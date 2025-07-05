@@ -9,7 +9,7 @@ class BaseSechemaMixin(BaseModel):
 
     Attributes
     ----------
-    delete_flag: bool
+    delete_flag: str
         削除フラグ
     create_datetime: datetime.datetime
         作成日時
@@ -17,6 +17,6 @@ class BaseSechemaMixin(BaseModel):
         更新日時
     """
 
-    delete_flag: bool | None = Field(..., title="削除フラグ")
+    delete_flag: str | None = Field(..., title="削除フラグ")
     create_datetime: datetime | None = Field(..., title="作成日時")
     update_datetime: datetime | None = Field(..., title="更新日時")

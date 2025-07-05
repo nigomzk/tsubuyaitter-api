@@ -1,11 +1,12 @@
 import uuid
 from datetime import datetime, timedelta
 
-from sqlalchemy import Boolean, DateTime, String
+from sqlalchemy import DateTime, String
 from sqlalchemy.orm import Mapped, declared_attr, mapped_column
 
 from app.core.config import get_settings
 from app.core.database import Base
+from app.enums import Flag
 
 
 class BaseModelMixin:
@@ -14,8 +15,10 @@ class BaseModelMixin:
     """
 
     @declared_attr
-    def delete_flag(cls) -> Mapped[bool]:
-        return mapped_column(Boolean, default=False, nullable=False, comment="削除フラグ")
+    def delete_flag(cls) -> Mapped[str]:
+        return mapped_column(
+            String(1), default=Flag.OFF.value, nullable=False, comment="削除フラグ"
+        )
 
     @declared_attr
     def create_datetime(cls) -> Mapped[datetime]:
