@@ -26,7 +26,7 @@ def upgrade() -> None:
     sa.Column('code', sa.String(length=6), nullable=False, comment='コード'),
     sa.Column('email', sa.String(length=255), nullable=False, comment='メールアドレス'),
     sa.Column('expire_datetime', sa.DateTime(), nullable=False, comment='有効期限'),
-    sa.Column('delete_flag', sa.Boolean(), nullable=False, comment='削除フラグ'),
+    sa.Column('delete_flag', sa.String(length=1), nullable=False, comment='削除フラグ'),
     sa.Column('create_datetime', sa.DateTime(), nullable=False, comment='作成日時'),
     sa.Column('update_datetime', sa.DateTime(), nullable=False, comment='更新日時'),
     sa.PrimaryKeyConstraint('authcode_id')
