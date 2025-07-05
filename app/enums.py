@@ -2,7 +2,12 @@ from enum import Enum
 
 
 class Flag(Enum):
-    """_summary_"""
+    """
+    フラグ
+
+    OFF: 0
+    ON: 1
+    """
 
     OFF = "0"
     ON = "1"
