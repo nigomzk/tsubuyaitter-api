@@ -1,20 +1,21 @@
+from datetime import datetime
 from typing import Any
 
-from fastapi import APIRouter, Depends
+from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app import crud
 from app.core.database import get_session
 from app.core.security import generate_authcode
 from app.models import Authcode
-from app.schemas.auth import RequestIssueAuthcodeForEmail, ResponseIssueAuthcodeForEmail
+from app.schemas import auth
 
 router = APIRouter(tags=["auth"])
 
 
-@router.post("/auth/email/issue-authcode", response_model=ResponseIssueAuthcodeForEmail)
+@router.post("/auth/email/issue-authcode", response_model=auth.ResponseIssueAuthcodeForEmail)
 async def issue_authcode_for_email(
-    req: RequestIssueAuthcodeForEmail, db: AsyncSession = Depends(get_session)
+    req: auth.RequestIssueAuthcodeForEmail, db: AsyncSession = Depends(get_session)
 ) -> Any:
     """
     メール認証コード発行API
@@ -34,7 +35,44 @@ async def issue_authcode_for_email(
 
     # @TODO メール送信
 
-    return ResponseIssueAuthcodeForEmail(
+    return auth.ResponseIssueAuthcodeForEmail(
         authcode_id=str(authcode.authcode_id),
         expire_datetime=str(authcode.expire_datetime),
     )
+
+
+@router.post("/auth/verify-authcode", response_model=None, status_code=status.HTTP_200_OK)
+async def verify_authcode(
+    req: auth.RequestVerifyAuthcode, db: AsyncSession = Depends(get_session)
+) -> None:
+    """
+    認証コード検証API
+
+    Parameters
+    ----------
+    req: auth.RequestVerifyAuthcode
+        認証コード検証リクエスト
+    db: AsyncSession, optional)
+        DBセッション Defaults to Depends(get_session).
+
+    Raises
+    ------
+    HTTPException:
+        authcode_idが不正 または 認証コード不一致 の場合（HTTPステータスコード：401）
+    HTTPException:
+        有効期限切れの場合（HTTPステータスコード：403）
+    """
+
+    data = auth.AuthcodeRead(**req.model_dump())
+    result = await crud.select_authcode_by_id(db, data)
+
+    # authcode_idが不正 または 認証コード不一致 の場合
+    if result is None or result.code != req.code:
+        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="認証に失敗しました。")
+    # 有効期限切れの場合
+    elif result.expire_datetime < datetime.now():
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN, detail="有効期限が切れています。"
+        )
+    # 認証成功
+    return
