@@ -11,3 +11,15 @@ class Flag(Enum):
 
     OFF = "0"
     ON = "1"
+
+
+class HelthCheckStatus(Enum):
+    """
+    ヘルスチェックステータス
+
+    HEALTHY: Healthy
+    UNHEALTHY: Unhealthy
+    """
+
+    HEALTHY = "Healthy"
+    UNHEALTHY = "Unhealthy"

@@ -5,6 +5,19 @@ from app.models import Authcode
 from app.schemas.auth import AuthcodeRead, AuthcodeSchema
 
 
+async def check_connection(db: AsyncSession) -> None:
+    """
+    DB接続を確認する。
+
+    Parameters
+    ----------
+    db: AsyncSession
+        DB接続session
+    """
+    await db.scalars(select(1))
+    return
+
+
 async def insert_authcode(db: AsyncSession, email: str, code: str) -> Authcode:
     """
     認証コードを登録する。
