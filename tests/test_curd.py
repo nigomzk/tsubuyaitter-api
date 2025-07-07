@@ -8,6 +8,16 @@ from app.schemas import auth
 
 
 @pytest.mark.asyncio
+async def test_check_connection(get_test_session: async_sessionmaker[AsyncSession]):
+    """
+    check_connectionのテストを行う
+    """
+    async with get_test_session() as db:
+        result = await crud.check_connection(db)
+        assert result is None
+
+
+@pytest.mark.asyncio
 async def test_insert_authcode(get_test_session: async_sessionmaker[AsyncSession]):
     """
     以下観点でinsert_authcodeのテストを行う
