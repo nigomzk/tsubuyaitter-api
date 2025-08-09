@@ -3,48 +3,98 @@ from fastapi import status
 from httpx import AsyncClient
 from pytest_mock import MockFixture
 
-from app.enums import HelthCheckStatus
+from app.enums import HealthCheckStatus
 
 
 @pytest.mark.asyncio
 @pytest.mark.parametrize(
-    ["is_connection_success", "expected_status_code", "expected_health_status", "expected_message"],
+    [
+        "is_db_connected",
+        "is_redis_connected",
+        "expected_http_status",
+        "expected_db_health",
+        "expected_redis_health",
+        "expected_app_health",
+    ],
     [
         pytest.param(
-            True, status.HTTP_200_OK, HelthCheckStatus.HEALTHY.value, "Success to connect server."
+            True,
+            True,
+            status.HTTP_200_OK,
+            HealthCheckStatus.HEALTHY.value,
+            HealthCheckStatus.HEALTHY.value,
+            HealthCheckStatus.HEALTHY.value,
         ),
         pytest.param(
             False,
+            True,
             status.HTTP_503_SERVICE_UNAVAILABLE,
-            HelthCheckStatus.UNHEALTHY.value,
-            "Faild to get connection database.",
+            HealthCheckStatus.UNHEALTHY.value,
+            HealthCheckStatus.HEALTHY.value,
+            HealthCheckStatus.UNHEALTHY.value,
+        ),
+        pytest.param(
+            True,
+            False,
+            status.HTTP_503_SERVICE_UNAVAILABLE,
+            HealthCheckStatus.HEALTHY.value,
+            HealthCheckStatus.UNHEALTHY.value,
+            HealthCheckStatus.UNHEALTHY.value,
+        ),
+        pytest.param(
+            False,
+            False,
+            status.HTTP_503_SERVICE_UNAVAILABLE,
+            HealthCheckStatus.UNHEALTHY.value,
+            HealthCheckStatus.UNHEALTHY.value,
+            HealthCheckStatus.UNHEALTHY.value,
         ),
     ],
 )
 async def test_health_check(
     async_client: AsyncClient,
     mocker: MockFixture,
-    is_connection_success: bool,
-    expected_status_code: int,
-    expected_health_status: str,
-    expected_message: str,
+    is_db_connected: bool,
+    is_redis_connected: bool,
+    expected_http_status: int,
+    expected_db_health: str,
+    expected_redis_health: str,
+    expected_app_health: str,
 ):
     """
     ヘルスチェックAPIについて以下ケースを検証する
 
-    +----+---+---+---+---+
-    | No | DB接続成功 | HTTPステータスコード | ヘルスチェックステータス | メッセージ |
-    +====+===+===+===+===+
-    | 1 | o | 200 | Healthy | Success to connect server. |
-    +----+---+---+---+---+
-    | 2 | x | 503 | Unhealthy | Faild to get connection database. |
-    +----+---+---+---+---+
+    +----+----------+-------------+-------------+-----------+--------------+------------+
+    | No | DB Conn. | Redis Conn. | HTTP Status | DB Health | Redis health | App health |
+    +====+==========+=============+=============+===========+==============+============+
+    | 1  | Sucess   | Sucess      | 200         | Healthy   | Healthy      | Healthy    |
+    +----+----------+-------------+-------------+-----------+--------------+------------+
+    | 2  | Fail     | Sucess      | 503         | Unhealthy | Healthy      | Unhealthy  |
+    +----+----------+-------------+-------------+-----------+--------------+------------+
+    | 3  | Sucess   | Fail        | 503         | Healthy   | UnHealthy    | Unhealthy  |
+    +----+----------+-------------+-------------+-----------+--------------+------------+
+    | 4  | Fail     | Fail        | 503         | UnHealthy | UnHealthy    | Unhealthy  |
+    +----+----------+-------------+-------------+-----------+--------------+------------+
     """
-    if not is_connection_success:
+    # 接続失敗するようにMock化
+    if not is_db_connected:
         mocker.patch("app.crud.check_connection", side_effect=Exception("something exception"))
+    if not is_redis_connected:
+        mocker.patch(
+            "app.core.redis.check_connection", side_effect=Exception("something exception")
+        )
     response = await async_client.get("/health-check")
-    assert response.status_code == expected_status_code
+    assert response.status_code == expected_http_status
 
+    # App全体のヘルスチェック結果
     response_obj = response.json()
-    assert response_obj["status"] == expected_health_status
-    assert response_obj["message"] == expected_message
+    assert response_obj["status"] == expected_app_health
+
+    healthcheck_list = response_obj["contents"]
+    for item in healthcheck_list:
+        # DBのヘルスチェック結果
+        if item["name"] == "database":
+            assert item["status"] == expected_db_health
+        # Redisのヘルスチェック結果
+        if item["name"] == "redis":
+            assert item["status"] == expected_redis_health

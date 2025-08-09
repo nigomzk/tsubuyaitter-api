@@ -21,3 +21,10 @@ async def get_redis_client() -> Redis:
     except ConnectionError as e:
         print(f"Redis接続エラー: {e}")
         raise
+
+
+async def check_connection(redis: Redis) -> str:
+    """
+    Redisとの接続チェックを行う。
+    """
+    return await redis.ping()  # pyright: ignore[reportUnknownMemberType]

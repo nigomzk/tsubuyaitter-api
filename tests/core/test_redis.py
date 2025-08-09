@@ -11,3 +11,13 @@ async def test_get_redis_client() -> None:
     client = await redis.get_redis_client()
     response = await client.ping()  # pyright: ignore[reportUnknownMemberType]
     assert response is not None
+
+
+@pytest.mark.asyncio
+async def test_check_connection() -> None:
+    """
+    Redisとの接続テストが成功すること。
+    """
+    client = await redis.get_redis_client()
+    result = await redis.check_connection(client)
+    assert result is not None
