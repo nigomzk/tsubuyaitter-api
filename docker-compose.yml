@@ -36,6 +36,17 @@ services:
       - "15432:5432"
     networks:
       - tsubuyaitter-backend
+  redis:
+    restart: always
+    container_name: tsubuyaitter-redis
+    image: redis:8.0.3-bookworm
+    env_file:
+      - .env
+    ports: 
+      - "16379:6379"
+    command: /bin/sh -c "redis-server --requirepass $${REDIS_PASSWORD}"
+    networks:
+      - tsubuyaitter-backend
 networks:
   tsubuyaitter-backend:
     driver: bridge

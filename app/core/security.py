@@ -1,4 +1,5 @@
 import secrets
+import string
 
 from app.core.config import get_settings
 
@@ -10,6 +11,6 @@ def generate_authcode() -> str:
     Returns
     ----------
     authcode: str
-      認証コード
+        認証コード
     """
-    return "".join(secrets.choice("0123456789") for _ in range(get_settings().AUTHCODE_LENGTH))
+    return "".join(secrets.choice(string.digits) for _ in range(get_settings().AUTHCODE_LENGTH))
