@@ -42,10 +42,13 @@ async def get_test_session() -> AsyncGenerator[async_sessionmaker[AsyncSession],
     )
     # SQLAlchemyで定義しているテーブルを全て作成する
     async with engine.begin() as conn:
-        await conn.run_sync(Base.metadata.drop_all)
         await conn.run_sync(Base.metadata.create_all)
 
     yield async_session
+
+    # SQLAlchemyで定義しているテーブルを全て削除する
+    async with engine.begin() as conn:
+        await conn.run_sync(Base.metadata.drop_all)
 
 
 @pytest_asyncio.fixture(scope="function")

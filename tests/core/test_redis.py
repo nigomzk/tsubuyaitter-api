@@ -34,3 +34,15 @@ def test_generate_temp_user_key() -> None:
     expected = f"{redis.PREFIX_TEMP_USER}:{authcode_id}:{code}"
     result = redis.generate_temp_user_key(authcode_id=authcode_id, code=code)
     assert result == expected
+
+
+def test_generte_jwt_token_key() -> None:
+    """
+    JWTトークン用のRedisキーが以下形式で取得できること。
+
+    "{Prefix}:{token_id}"
+    """
+    token_id = "00000000-0000-0000-0000-000000000001"
+    expected = f"{redis.PREFIX_JWT_TOKEN}:{token_id}"
+    result = redis.generate_jwt_token_key(token_id)
+    assert result == expected

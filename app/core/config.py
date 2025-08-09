@@ -45,6 +45,10 @@ class Settings(BaseSettings):
     USERNAME_MAX_LENGTH: int
     PASSWORD_MAX_LENGTH: int
     PASSWORD_MIN_LENGTH: int
+    ACCESS_TOKEN_EXPIRE_MINUTES: int
+    REFRESH_TOKEN_EXPIRE_MINUTES: int
+    SECRET_KEY: str
+    ALGORITHM: str
 
 
 @lru_cache

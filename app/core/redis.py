@@ -5,6 +5,7 @@ from app.core.config import get_settings
 
 # キーの用途別prefix定義
 PREFIX_TEMP_USER = "temp_user"
+PREFIX_JWT_TOKEN = "jwt_token"
 
 
 async def get_redis_client() -> Redis:
@@ -50,3 +51,20 @@ def generate_temp_user_key(authcode_id: str, code: str) -> str:
         一時ユーザー用キー
     """
     return f"{PREFIX_TEMP_USER}:{authcode_id}:{code}"
+
+
+def generate_jwt_token_key(token_id: str) -> str:
+    """
+    JWTトークン用キーを生成する。
+
+    Parameters
+    ----------
+    token_id: str
+        トークンID
+
+    Returns
+    -------
+    str:
+        JWTトークン用キー
+    """
+    return f"{PREFIX_JWT_TOKEN}:{token_id}"

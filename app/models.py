@@ -94,7 +94,7 @@ class User(Base, BaseModelMixin):
         String(1), default=Flag.OFF.value, comment="アカウントロックフラグ"
     )
 
-    refresh_tokens = relationship("UserRefreshToken", back_populates="user")
+    user_credentials = relationship("UserCredential", back_populates="user")
 
 
 class UserCredential(Base, BaseModelMixin):

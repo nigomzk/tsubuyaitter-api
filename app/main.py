@@ -7,6 +7,7 @@ app.include_router(auth.router)
 app.include_router(health_check.router)
 app.include_router(user.router)
 
+
 @app.get("/")
 async def root():
     """

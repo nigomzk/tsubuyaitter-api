@@ -50,3 +50,46 @@ async def register_user(
     return ResponseRegisterUser(
         authcode_id=authcode.authcode_id, expire_datetime=authcode.expire_datetime
     )
+
+
+@router.post("/register/verify-authcode", status_code=status.HTTP_200_OK)
+async def verify_authcode(
+    req: RequestVerifyAuthcode,
+    db: AsyncSession = Depends(get_session),
+    redis: Redis = Depends(get_redis_client),
+) -> token_schema.Token:
+    """
+    ユーザー登録認証コード検証API
+    """
+
+    # 認証コードの検証
+    key = generate_temp_user_key(req.authcode_id, req.code)
+    data = await redis.get(key)
+    if not data:
+        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="認証に失敗しました。")
+    temp_user = TempUser.model_validate_json(data)
+
+    # キャッシュ上の一時ユーザー情報を削除
+    await redis.delete(key)
+
+    # メールアドレス重複チェック
+    if await user_service.is_registered_email(db, temp_user.email):
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="問題が発生しました。最初からやり直してください。",
+        )
+
+    # ユニークな初期ユーザー名の生成
+    initial_username = await user_service.generate_initial_username(db)
+
+    # ユーザー登録
+    user = await crud.insert_user(
+        db,
+        username=initial_username,
+        account_name=temp_user.account_name,
+        email=temp_user.email,
+        birthday=temp_user.birthday,
+    )
+
+    # JWTトークンを返却
+    return await token_service.create_tokens(user, redis)
