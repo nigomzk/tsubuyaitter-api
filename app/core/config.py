@@ -32,9 +32,14 @@ class Settings(BaseSettings):
     POOL_CONN_TIMEOUT: int
     POOL_RECYCLE: int
     SQL_LOGGING: bool
+    REDIS_HOST: str
+    REDIS_PORT: int
+    REDIS_DB: int
+    REDIS_PASSWORD: str
     TEST_DATABASE_NAME: str
     TEST_DATABASE_USER: str
     TEST_DATABASE_PASSWORD: str
+    TEST_REDIS_DB: int
     AUTHCODE_LENGTH: int
     AUTHCODE_EXPIRE_MINUTES: int
 
