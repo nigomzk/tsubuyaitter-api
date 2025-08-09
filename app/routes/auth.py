@@ -6,16 +6,15 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from app import crud
 from app.core.database import get_session
-from app.core.security import generate_authcode
-from app.models import Authcode
-from app.schemas import auth
+from app.schemas import auth_schema
+from app.services.auth_service import send_authcode_by_email
 
 router = APIRouter(tags=["auth"])
 
 
-@router.post("/auth/email/issue-authcode", response_model=auth.ResponseIssueAuthcodeForEmail)
+@router.post("/auth/email/issue-authcode", response_model=auth_schema.ResponseIssueAuthcodeForEmail)
 async def issue_authcode_for_email(
-    req: auth.RequestIssueAuthcodeForEmail, db: AsyncSession = Depends(get_session)
+    req: auth_schema.RequestIssueAuthcodeForEmail, db: AsyncSession = Depends(get_session)
 ) -> Any:
     """
     メール認証コード発行API
@@ -27,23 +26,18 @@ async def issue_authcode_for_email(
     Returns:
         Any: レスポンス
     """
-    # @TODO emailが登録済みでないかチェック
 
-    # authcode発行
-    code: str = generate_authcode()
-    authcode: Authcode = await crud.insert_authcode(db, req.email, code)
+    # authcode発行、メール送信
+    authcode: auth_schema.Authcode = await send_authcode_by_email(db, req.email)
 
-    # @TODO メール送信
-
-    return auth.ResponseIssueAuthcodeForEmail(
-        authcode_id=str(authcode.authcode_id),
-        expire_datetime=str(authcode.expire_datetime),
+    return auth_schema.ResponseIssueAuthcodeForEmail(
+        authcode_id=authcode.authcode_id, expire_datetime=authcode.expire_datetime
     )
 
 
 @router.post("/auth/verify-authcode", response_model=None, status_code=status.HTTP_200_OK)
 async def verify_authcode(
-    req: auth.RequestVerifyAuthcode, db: AsyncSession = Depends(get_session)
+    req: auth_schema.RequestVerifyAuthcode, db: AsyncSession = Depends(get_session)
 ) -> None:
     """
     認証コード検証API
@@ -63,8 +57,7 @@ async def verify_authcode(
         有効期限切れの場合（HTTPステータスコード：403）
     """
 
-    data = auth.AuthcodeRead(**req.model_dump())
-    result = await crud.select_authcode_by_id(db, data)
+    result = await crud.select_authcode_by_id(db, req.authcode_id)
 
     # authcode_idが不正 または 認証コード不一致 の場合
     if result is None or result.code != req.code:
