@@ -42,6 +42,9 @@ class Settings(BaseSettings):
     TEST_REDIS_DB: int
     AUTHCODE_LENGTH: int
     AUTHCODE_EXPIRE_MINUTES: int
+    USERNAME_MAX_LENGTH: int
+    PASSWORD_MAX_LENGTH: int
+    PASSWORD_MIN_LENGTH: int
 
 
 @lru_cache

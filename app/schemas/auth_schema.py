@@ -1,12 +1,11 @@
 from datetime import datetime
 
-from pydantic import BaseModel, EmailStr, Field
+from pydantic import BaseModel, ConfigDict, EmailStr, Field
 
 from app.core.config import get_settings
-from app.schemas.base import BaseSechemaMixin
 
 
-class AuthcodeSchema(BaseSechemaMixin):
+class Authcode(BaseModel):
     """
     認証コードスキーマ
 
@@ -22,18 +21,12 @@ class AuthcodeSchema(BaseSechemaMixin):
         有効期限
     """
 
-    authcode_id: str = Field(..., min_length=36, max_length=36, title="認証コードID")
-    code: str = Field(
-        ...,
-        min_length=get_settings().AUTHCODE_LENGTH,
-        max_length=get_settings().AUTHCODE_LENGTH,
-        title="認証コード",
-    )
-    email: EmailStr = Field(..., title="メールアドレス")
-    expire_datetime: datetime = Field(..., title="有効期限")
+    model_config = ConfigDict(from_attributes=True)
 
-    class ConfigDict:
-        from_attributes = True
+    authcode_id: str
+    code: str
+    email: EmailStr
+    expire_datetime: datetime
 
 
 class AuthcodeRead(BaseModel):
@@ -63,7 +56,7 @@ class ResponseIssueAuthcodeForEmail(BaseModel):
     """
 
     authcode_id: str = Field(..., min_length=36, max_length=36, title="認証コードID")
-    expire_datetime: str = Field(..., title="有効期限")
+    expire_datetime: datetime = Field(..., title="有効期限")
 
 
 class RequestVerifyAuthcode(BaseModel):

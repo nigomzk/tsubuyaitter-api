@@ -1,8 +1,8 @@
 import uuid
-from datetime import datetime, timedelta
+from datetime import date, datetime, timedelta
 
-from sqlalchemy import DateTime, String
-from sqlalchemy.orm import Mapped, declared_attr, mapped_column
+from sqlalchemy import BigInteger, Date, DateTime, ForeignKey, Integer, Sequence, String, Text
+from sqlalchemy.orm import Mapped, declared_attr, mapped_column, relationship
 
 from app.core.config import get_settings
 from app.core.database import Base
@@ -55,3 +55,59 @@ class Authcode(Base, BaseModelMixin):
         nullable=False,
         comment="有効期限",
     )
+
+
+class User(Base, BaseModelMixin):
+    """
+    ユーザーモデル
+    """
+
+    __tablename__ = "users"
+    user_id_seq = Sequence("user_id_seq")
+    user_id: Mapped[str] = mapped_column(
+        BigInteger,
+        user_id_seq,
+        primary_key=True,
+        server_default=user_id_seq.next_value(),
+        comment="ユーザーID",
+    )
+    username: Mapped[str] = mapped_column(String(15), index=True, unique=True, comment="ユーザー名")
+    account_name: Mapped[str] = mapped_column(String(50), comment="アカウント名")
+    email: Mapped[str] = mapped_column(
+        String(255), unique=True, index=True, comment="メールアドレス"
+    )
+    birthday: Mapped[date] = mapped_column(Date, comment="生年月日")
+    self_introduction: Mapped[str] = mapped_column(
+        String(200), nullable=True, default=None, comment="自己紹介"
+    )
+    profile_image: Mapped[str] = mapped_column(
+        Text, nullable=True, default=None, comment="プロフィール画像"
+    )
+    header_image: Mapped[str] = mapped_column(
+        Text, nullable=True, default=None, comment="ヘッダー画像"
+    )
+    verified_flag: Mapped[str] = mapped_column(
+        String(1), default=Flag.OFF.value, nullable=False, comment="認証済みフラグ"
+    )
+    auth_failure_count: Mapped[int] = mapped_column(Integer, default=0, comment="認証失敗回数")
+    account_lock_flag: Mapped[str] = mapped_column(
+        String(1), default=Flag.OFF.value, comment="アカウントロックフラグ"
+    )
+
+    refresh_tokens = relationship("UserRefreshToken", back_populates="user")
+
+
+class UserCredential(Base, BaseModelMixin):
+    """
+    ユーザー認証情報モデル
+    """
+
+    __tablename__ = "user_credentials"
+    user_id: Mapped[str] = mapped_column(
+        ForeignKey("users.user_id"), primary_key=True, comment="ユーザーID"
+    )
+    identity_type: Mapped[str] = mapped_column(String(20), primary_key=True, comment="識別子種別")
+    identity: Mapped[str] = mapped_column(String(255), unique=True, comment="識別子")
+    hashed_password: Mapped[str] = mapped_column(String(255), comment="ハッシュ化済みパスワード")
+
+    user = relationship("User", back_populates="user_credentials")

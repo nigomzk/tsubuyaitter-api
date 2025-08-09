@@ -1,10 +1,12 @@
+from datetime import date
+
 import pytest
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker
 
 from app import crud
-from app.models import Authcode
-from app.schemas import auth
+from app.enums import Flag
+from app.models import Authcode, User
 
 
 @pytest.mark.asyncio
@@ -36,9 +38,9 @@ async def test_insert_authcode(get_test_session: async_sessionmaker[AsyncSession
         assert len(result.all()) == expect_before
 
         # 実行
-        authcode: Authcode = await crud.insert_authcode(db, email=email, code=code)
-        assert str(authcode.code) == code
-        assert str(authcode.email) == email
+        authcode = await crud.insert_authcode(db, email=email, code=code)
+        assert authcode.code == code
+        assert authcode.email == email
 
         # 実行後は1件
         result = await db.scalars(select(Authcode))
@@ -90,12 +92,46 @@ async def test_select_authcode_by_id(
         有効期限日時
     """
 
-    data = auth.AuthcodeRead(authcode_id=authcode_id)
     async with get_test_session() as db:
-        result = await crud.select_authcode_by_id(db, data)
+        result = await crud.select_authcode_by_id(db, authcode_id=authcode_id)
         if expected_hit:
             assert result is not None
             assert result.code == expected_code
             assert str(result.expire_datetime) == expected_expire_datetime
+        else:
+            assert result is None
+
+
+@pytest.mark.asyncio
+@pytest.mark.parametrize(
+    ["email", "expected_hit", "expected_username"],
+    [
+        pytest.param("user1@sample.com", True, "user1"),
+        pytest.param("user9@sample.com", False, None),
+    ],
+)
+async def test_select_user_by_email(
+    get_test_session: async_sessionmaker[AsyncSession],
+    insert_test_data_user: None,
+    email: str,
+    expect_hit: bool,
+    expect_username: str | None,
+) -> None:
+    """
+    select_user_by_emailについて以下ケースを検証する。
+
+    +----+-------------------------+---------------------------------+
+    | No | expected hit in search. | expected username (case of hit) |
+    +====+=========================+=================================+
+    | 1  | True                    | user1                           |
+    +----+-------------------------+---------------------------------+
+    | 2  | False                   | -                               |
+    +----+-------------------------+---------------------------------+
+    """
+    async with get_test_session() as db:
+        result = await crud.select_user_by_email(db, email)
+        if expect_hit:
+            assert result is not None
+            assert result.username == expect_username
         else:
             assert result is None
