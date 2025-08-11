@@ -30,9 +30,7 @@ async def issue_authcode_for_email(
     # authcode発行、メール送信
     authcode: auth_schema.Authcode = await send_authcode_by_email(db, req.email)
 
-    return auth_schema.ResponseIssueAuthcodeForEmail(
-        authcode_id=authcode.authcode_id, expire_datetime=authcode.expire_datetime
-    )
+    return auth_schema.ResponseIssueAuthcodeForEmail(reception_id=authcode.authcode_id)
 
 
 @router.post("/auth/verify-authcode", response_model=None, status_code=status.HTTP_200_OK)

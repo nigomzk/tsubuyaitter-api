@@ -55,8 +55,7 @@ class ResponseIssueAuthcodeForEmail(BaseModel):
     メール認証コード発行レスポンス
     """
 
-    authcode_id: str = Field(..., min_length=36, max_length=36, title="認証コードID")
-    expire_datetime: datetime = Field(..., title="有効期限")
+    reception_id: str = Field(..., min_length=36, max_length=36, title="受付ID")
 
 
 class RequestVerifyAuthcode(BaseModel):

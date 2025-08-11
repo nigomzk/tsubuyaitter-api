@@ -47,6 +47,15 @@ services:
     command: /bin/sh -c "redis-server --requirepass $${REDIS_PASSWORD}"
     networks:
       - tsubuyaitter-backend
+  mail:
+    restart: always
+    container_name: tsubuyaitter-mail
+    image: schickling/mailcatcher
+    ports:
+      - "11080:1080"
+      - "11025:1025"
+    networks:
+      - tsubuyaitter-backend
 networks:
   tsubuyaitter-backend:
     driver: bridge
