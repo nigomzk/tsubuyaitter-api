@@ -1,4 +1,4 @@
-from datetime import date, datetime, timedelta
+from datetime import date, timedelta
 
 import pytest
 import pytest_asyncio
@@ -12,7 +12,7 @@ from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker
 from app.core import redis
 from app.core.config import get_settings
 from app.models import User
-from app.schemas import auth_schema, user_schema
+from app.schemas import user_schema
 
 
 @pytest_asyncio.fixture
@@ -75,15 +75,10 @@ async def test_register_user(
     +----+-------------------------+------------------+-------------+
     """
     # 認証コード生成をMock化
-    test_authcode_id = "00000000-0000-0000-0000-000000000001"
+    test_reception_id = "00000000-0000-0000-0000-000000000001"
     test_code = "123456"
-    mocked_authcode = auth_schema.Authcode(
-        authcode_id=test_authcode_id,
-        code=test_code,
-        email=test_email,
-        expire_datetime=datetime.now(),
-    )
-    mocker.patch("app.services.auth_service.send_authcode_by_email", return_value=mocked_authcode)
+    mocker.patch("uuid.uuid4", return_value=test_reception_id)
+    mocker.patch("app.core.security.generate_authcode", return_value=test_code)
 
     # テスト用リクエストデータ生成
     test_account_name = "テストユーザー"
@@ -104,7 +99,7 @@ async def test_register_user(
     if is_success:
         # キャッシュに一時ユーザーが登録されていること
         response_obj = response.json()
-        key = redis.generate_temp_user_key(response_obj["authcode_id"], test_code)
+        key = redis.generate_temp_user_key(response_obj["reception_id"], test_code)
         data = await get_test_redis.get(key)
         chache_user = user_schema.TempUser.model_validate_json(data)
         assert chache_user.account_name == test_account_name

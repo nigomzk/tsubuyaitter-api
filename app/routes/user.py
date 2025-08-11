@@ -1,22 +1,23 @@
+import uuid
 from datetime import timedelta
 
-from fastapi import APIRouter, Depends, HTTPException, status
+from fastapi import APIRouter, BackgroundTasks, Depends, HTTPException, status
 from redis.asyncio.client import Redis
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app import crud
+from app.core import email_manager, security
 from app.core.config import get_settings
 from app.core.database import get_session
 from app.core.redis import generate_temp_user_key, get_redis_client
 from app.schemas import token_schema
-from app.schemas.auth_schema import Authcode
 from app.schemas.user_schema import (
     RequestRegisterUser,
     RequestVerifyAuthcode,
     ResponseRegisterUser,
     TempUser,
 )
-from app.services import auth_service, token_service, user_service
+from app.services import token_service, user_service
 
 router = APIRouter(prefix="/user", tags=["user"])
 
@@ -24,6 +25,7 @@ router = APIRouter(prefix="/user", tags=["user"])
 @router.post("/register", status_code=status.HTTP_200_OK)
 async def register_user(
     req: RequestRegisterUser,
+    background_tasks: BackgroundTasks,
     db: AsyncSession = Depends(get_session),
     redis: Redis = Depends(get_redis_client),
 ) -> ResponseRegisterUser:
@@ -37,19 +39,31 @@ async def register_user(
             detail="このメールアドレスはすでに利用されているため使用できません。",
         )
 
-    # 認証コード生成、メール送信
-    authcode: Authcode = await auth_service.send_authcode_by_email(db, req.email)
+    # 受付ID、認証コード生成
+    authcode = security.generate_authcode()
+    reception_id = str(uuid.uuid4())
     temp_user = TempUser(**req.model_dump())
-    key = generate_temp_user_key(authcode.authcode_id, authcode.code)
     await redis.setex(
-        key,
-        timedelta(minutes=get_settings().AUTHCODE_EXPIRE_MINUTES),
-        temp_user.model_dump_json(),
+        name=generate_temp_user_key(reception_id, authcode),
+        time=timedelta(minutes=get_settings().AUTHCODE_EXPIRE_MINUTES),
+        value=temp_user.model_dump_json(),
     )
 
-    return ResponseRegisterUser(
-        authcode_id=authcode.authcode_id, expire_datetime=authcode.expire_datetime
+    # メール送信
+    context: dict[str, str | int] = {
+        "code": authcode,
+        "expire_miniutes": get_settings().AUTHCODE_EXPIRE_MINUTES,
+        "message": "下記の認証コードを入力して、Tsubuyaitterへの登録を完了させてください。",
+    }
+    background_tasks.add_task(
+        email_manager.send_email,
+        [req.email],
+        email_manager.TEMPLATE_CONTACT_AUTHCODE,
+        "認証コードのご案内",
+        context,
     )
+
+    return ResponseRegisterUser(reception_id=reception_id)
 
 
 @router.post("/register/verify-authcode", status_code=status.HTTP_200_OK)

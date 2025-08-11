@@ -3,6 +3,15 @@ revision = 2
 requires-python = ">=3.13"
 
 [[package]]
+name = "aiosmtplib"
+version = "3.0.2"
+source = { registry = "https://pypi.org/simple" }
+sdist = { url = "https://files.pythonhosted.org/packages/91/2a/812517f8350cd317aad2ba1ce25dfc213c6f1f2e62e1cbf662b4bdc51d34/aiosmtplib-3.0.2.tar.gz", hash = "sha256:08fd840f9dbc23258025dca229e8a8f04d2ccf3ecb1319585615bfc7933f7f47", size = 59941, upload-time = "2024-07-31T05:13:10.065Z" }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/87/35/441faea7a11159795881a6ec869454f40269e4e3806dced935a35d83a412/aiosmtplib-3.0.2-py3-none-any.whl", hash = "sha256:8783059603a34834c7c90ca51103c3aa129d5922003b5ce98dbaa6d4440f10fc", size = 27111, upload-time = "2024-07-31T05:13:08.515Z" },
+]
+
+[[package]]
 name = "alembic"
 version = "1.16.2"
 source = { registry = "https://pypi.org/simple" }
@@ -46,6 +55,8 @@ dependencies = [
     { name = "alembic" },
     { name = "asyncpg" },
     { name = "fastapi", extra = ["standard"] },
+    { name = "fastapi-mail" },
+    { name = "jinja2" },
     { name = "psycopg", extra = ["binary"] },
     { name = "psycopg2-binary" },
     { name = "pydantic-settings" },
@@ -71,10 +82,12 @@ requires-dist = [
     { name = "alembic", specifier = ">=1.16.2,<2.0.0" },
     { name = "asyncpg", specifier = ">=0.30.0,<1.0.0" },
     { name = "fastapi", extras = ["standard"], specifier = ">=0.115.13,<1.0.0" },
+    { name = "fastapi-mail", specifier = ">=1.5.0,<2.0.0" },
+    { name = "jinja2", specifier = ">=3.1.6" },
     { name = "psycopg", extras = ["binary"], specifier = ">=3.2.9" },
     { name = "psycopg2-binary", specifier = ">=2.9.10,<3.0.0" },
     { name = "pydantic-settings", specifier = ">=2.10.0,<3.0.0" },
-    { name = "python-jose", extras = ["cryptography"], specifier = ">=3.5.0" },
+    { name = "python-jose", extras = ["cryptography"], specifier = ">=3.5.0,<4.0.0" },
     { name = "redis", specifier = ">=6.2.0,<7.0.9" },
     { name = "sqlalchemy", specifier = ">=2.0.41,<3.0.0" },
 ]
@@ -103,6 +116,15 @@ wheels = [
     { url = "https://files.pythonhosted.org/packages/ef/5f/0bf65511d4eeac3a1f41c54034a492515a707c6edbc642174ae79034d3ba/asyncpg-0.30.0-cp313-cp313-musllinux_1_2_x86_64.whl", hash = "sha256:04ff0785ae7eed6cc138e73fc67b8e51d54ee7a3ce9b63666ce55a0bf095f7ba", size = 3662720, upload-time = "2024-10-20T00:30:04.501Z" },
     { url = "https://files.pythonhosted.org/packages/e7/31/1513d5a6412b98052c3ed9158d783b1e09d0910f51fbe0e05f56cc370bc4/asyncpg-0.30.0-cp313-cp313-win32.whl", hash = "sha256:ae374585f51c2b444510cdf3595b97ece4f233fde739aa14b50e0d64e8a7a590", size = 560404, upload-time = "2024-10-20T00:30:06.537Z" },
     { url = "https://files.pythonhosted.org/packages/c8/a4/cec76b3389c4c5ff66301cd100fe88c318563ec8a520e0b2e792b5b84972/asyncpg-0.30.0-cp313-cp313-win_amd64.whl", hash = "sha256:f59b430b8e27557c3fb9869222559f7417ced18688375825f8f12302c34e915e", size = 621623, upload-time = "2024-10-20T00:30:09.024Z" },
+]
+
+[[package]]
+name = "blinker"
+version = "1.9.0"
+source = { registry = "https://pypi.org/simple" }
+sdist = { url = "https://files.pythonhosted.org/packages/21/28/9b3f50ce0e048515135495f198351908d99540d69bfdc8c1d15b73dc55ce/blinker-1.9.0.tar.gz", hash = "sha256:b4ce2265a7abece45e7cc896e98dbebe6cead56bcf805a3d23136d145f5445bf", size = 22460, upload-time = "2024-11-08T17:25:47.436Z" }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/10/cb/f2ad4230dc2eb1a74edf38f1a38b9b52277f75bef262d8908e60d957e13c/blinker-1.9.0-py3-none-any.whl", hash = "sha256:ba0efaa9080b619ff2f3459d1d500c57bddea4a6b424b60a91141db6fd2f08bc", size = 8458, upload-time = "2024-11-08T17:25:46.184Z" },
 ]
 
 [[package]]
@@ -298,6 +320,24 @@ wheels = [
 [package.optional-dependencies]
 standard = [
     { name = "uvicorn", extra = ["standard"] },
+]
+
+[[package]]
+name = "fastapi-mail"
+version = "1.5.0"
+source = { registry = "https://pypi.org/simple" }
+dependencies = [
+    { name = "aiosmtplib" },
+    { name = "blinker" },
+    { name = "email-validator" },
+    { name = "jinja2" },
+    { name = "pydantic" },
+    { name = "pydantic-settings" },
+    { name = "starlette" },
+]
+sdist = { url = "https://files.pythonhosted.org/packages/c0/3b/8987e2472303a7e3d12983c6edc62f85948df10439e067bb19355cbd3326/fastapi_mail-1.5.0.tar.gz", hash = "sha256:d2e59cde8ef27e5c9e196639c9506b895000350e19a13b3e0a60cd4e33813f09", size = 13271, upload-time = "2025-05-21T07:38:56.091Z" }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/93/c0/9632fcf5201e9481ec0ac8d107f3b2ec058245325a235f0c651601e3552b/fastapi_mail-1.5.0-py3-none-any.whl", hash = "sha256:c7c811a2a06e5aa3e444f8ae15052479a7726ca52e82c31b9e7bbac51a491204", size = 15081, upload-time = "2025-05-21T07:38:54.602Z" },
 ]
 
 [[package]]

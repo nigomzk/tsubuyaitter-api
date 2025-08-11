@@ -1,9 +1,12 @@
 from datetime import datetime
+from typing import Any
 
 from fastapi import HTTPException, status
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app import crud
+from app.core import email_manager
+from app.core.config import get_settings
 from app.core.security import generate_authcode
 from app.schemas import auth_schema
 
@@ -28,7 +31,19 @@ async def send_authcode_by_email(db: AsyncSession, email: str) -> auth_schema.Au
     code: str = generate_authcode()
     authcode: auth_schema.Authcode = await crud.insert_authcode(db, email=email, code=code)
 
-    # @TODO メール送信
+    # メール送信
+    context: dict[str, Any] = {
+        "purpose": "アカウントを作成する",
+        "code": authcode.code,
+        "reception_datetime": datetime.now(),
+        "expire_miniutes": get_settings().AUTHCODE_EXPIRE_MINUTES,
+    }
+    await email_manager.send_email(
+        emails=[email],
+        template_name=email_manager.TEMPLATE_CONTACT_AUTHCODE,
+        subject="認証コードのご連絡",
+        context=context,
+    )
 
     return authcode
 

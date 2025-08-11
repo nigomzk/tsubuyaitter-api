@@ -16,6 +16,7 @@ from sqlalchemy.ext.asyncio import (
 
 from app.core.config import get_settings
 from app.core.database import DATABASE_OPTION, Base, get_session
+from app.core.email_manager import fm
 from app.core.redis import get_redis_client
 from app.main import app
 from app.models import Authcode, User
@@ -40,8 +41,9 @@ async def get_test_session() -> AsyncGenerator[async_sessionmaker[AsyncSession],
         autoflush=False,
         expire_on_commit=True,
     )
-    # SQLAlchemyで定義しているテーブルを全て作成する
+    # SQLAlchemyで定義しているテーブルを全て削除・作成する
     async with engine.begin() as conn:
+        await conn.run_sync(Base.metadata.drop_all)
         await conn.run_sync(Base.metadata.create_all)
 
     yield async_session
@@ -96,6 +98,9 @@ async def async_client(
     # DIでFastAPIのDBの向き先をテスト用DBに変更
     app.dependency_overrides[get_session] = _override_get_session
     app.dependency_overrides[get_redis_client] = _ovveride_get_redis
+
+    # メール送信を抑止
+    fm.config.SUPPRESS_SEND = 1
 
     # テスト用非同期HTTPクライアントを返却
     async with AsyncClient(transport=ASGITransport(app=app), base_url="http://test") as client:
