@@ -1,10 +1,8 @@
-import uuid
-from datetime import date, datetime, timedelta
+from datetime import date, datetime
 
 from sqlalchemy import BigInteger, Date, DateTime, ForeignKey, Integer, Sequence, String, Text
 from sqlalchemy.orm import Mapped, declared_attr, mapped_column, relationship
 
-from app.core.config import get_settings
 from app.core.database import Base
 from app.enums import Flag
 
@@ -33,28 +31,6 @@ class BaseModelMixin:
             nullable=False,
             comment="更新日時",
         )
-
-
-class Authcode(Base, BaseModelMixin):
-    """
-    認証コードモデル
-    """
-
-    __tablename__ = "authcodes"
-    authcode_id: Mapped[str] = mapped_column(
-        String(36),
-        primary_key=True,
-        default=lambda: str(uuid.uuid4()),
-        comment="認証コードID",
-    )
-    code: Mapped[str] = mapped_column(String(6), nullable=False, comment="コード")
-    email: Mapped[str] = mapped_column(String(255), nullable=False, comment="メールアドレス")
-    expire_datetime: Mapped[datetime] = mapped_column(
-        DateTime,
-        default=(datetime.now() + timedelta(minutes=get_settings().AUTHCODE_EXPIRE_MINUTES)),
-        nullable=False,
-        comment="有効期限",
-    )
 
 
 class User(Base, BaseModelMixin):
