@@ -34,15 +34,15 @@ async def check_connection(redis: Redis) -> str:
     return await redis.ping()  # pyright: ignore[reportUnknownMemberType]
 
 
-def generate_temp_user_key(authcode_id: str, code: str) -> str:
+def generate_temp_user_key(reception_id: str, authcode: str) -> str:
     """
     一時ユーザー用キーを生成する。
 
     Parameters
     ----------
-    authcode_id: str
-        認証コードID
-    code: str
+    reception_id: str
+        受付ID
+    authcode: str
         認証コード
 
     Returns
@@ -50,7 +50,7 @@ def generate_temp_user_key(authcode_id: str, code: str) -> str:
     str:
         一時ユーザー用キー
     """
-    return f"{PREFIX_TEMP_USER}:{authcode_id}:{code}"
+    return f"{PREFIX_TEMP_USER}:{reception_id}:{authcode}"
 
 
 def generate_jwt_token_key(token_id: str) -> str:

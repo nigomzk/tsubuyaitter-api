@@ -76,9 +76,9 @@ async def test_register_user(
     """
     # 認証コード生成をMock化
     test_reception_id = "00000000-0000-0000-0000-000000000001"
-    test_code = "123456"
+    test_authcode = "123456"
     mocker.patch("uuid.uuid4", return_value=test_reception_id)
-    mocker.patch("app.core.security.generate_authcode", return_value=test_code)
+    mocker.patch("app.core.security.generate_authcode", return_value=test_authcode)
 
     # テスト用リクエストデータ生成
     test_account_name = "テストユーザー"
@@ -99,7 +99,7 @@ async def test_register_user(
     if is_success:
         # キャッシュに一時ユーザーが登録されていること
         response_obj = response.json()
-        key = redis.generate_temp_user_key(response_obj["reception_id"], test_code)
+        key = redis.generate_temp_user_key(response_obj["reception_id"], test_authcode)
         data = await get_test_redis.get(key)
         chache_user = user_schema.TempUser.model_validate_json(data)
         assert chache_user.account_name == test_account_name
@@ -109,7 +109,7 @@ async def test_register_user(
 
 @pytest.mark.asyncio
 @pytest.mark.parametrize(
-    ["req_authcode_id", "req_code", "expected_http_status"],
+    ["req_reception_id", "req_authcode", "expected_http_status"],
     [
         # 正常系
         pytest.param("000000000000", "123450", status.HTTP_200_OK),
@@ -127,24 +127,24 @@ async def test_verify_authcode(
     get_test_redis: Redis,
     insert_test_temp_user: None,
     insert_test_data_user: None,
-    req_authcode_id: str,
-    req_code: str,
+    req_reception_id: str,
+    req_authcode: str,
     expected_http_status: int,
 ):
     """
     ユーザー登録認証コード検証APIについて以下ケースを検証する。
 
-    +----+----------------------------+------------------------------------+------+-------------+
-    | No | case                       | authcode_id                        | code | HTTP status |
-    +====+============================+====================================+======+=============+
-    | 1  |Success.                    |00000000-0000-0000-0000-000000000000|123450| 200         |
-    +----+----------------------------+------------------------------------+------+-------------+
-    | 2  |Error(authcode_id mismatch).|00000000-0000-0000-0000-000000000009|123450| 401         |
-    +----+----------------------------+------------------------------------+------+-------------+
-    | 3  |Error(code mismatch).       |00000000-0000-0000-0000-000000000000|923456| 401         |
-    +----+----------------------------+------------------------------------+------+-------------+
-    | 4  |Error(email duplicate).     |00000000-0000-0000-0000-000000000001|123451| 400         |
-    +----+----------------------------+------------------------------------+------+-------------+
+    +----+----------------------------+------------------------------------+--------+-------------+
+    | No | case                       | reception_id                       |authcode| HTTP status |
+    +====+============================+====================================+========+=============+
+    | 1  |Success.                    |00000000-0000-0000-0000-000000000000| 123450 | 200         |
+    +----+----------------------------+------------------------------------+--------+-------------+
+    | 2  |Error(authcode_id mismatch).|00000000-0000-0000-0000-000000000009| 123450 | 401         |
+    +----+----------------------------+------------------------------------+--------+-------------+
+    | 3  |Error(code mismatch).       |00000000-0000-0000-0000-000000000000| 923456 | 401         |
+    +----+----------------------------+------------------------------------+--------+-------------+
+    | 4  |Error(email duplicate).     |00000000-0000-0000-0000-000000000001| 123451 | 400         |
+    +----+----------------------------+------------------------------------+--------+-------------+
     """
 
     # API実行前後の想定登録ユーザー数
@@ -162,8 +162,8 @@ async def test_verify_authcode(
         assert len(result) == expected_before
 
     # API呼び出し
-    req_authcode_id = f"00000000-0000-0000-0000-{req_authcode_id}"
-    request_data = {"authcode_id": req_authcode_id, "code": req_code}
+    req_authcode_id = f"00000000-0000-0000-0000-{req_reception_id}"
+    request_data = {"reception_id": req_authcode_id, "authcode": req_authcode}
     response = await async_client.post("/user/register/verify-authcode", json=request_data)
 
     # HTTPステータスコードが期待通りであること
@@ -171,7 +171,7 @@ async def test_verify_authcode(
 
     # 検証エラー（HTTPステータスコード401）以外の場合、キャッシュデータが削除されること
     if response.status_code != status.HTTP_401_UNAUTHORIZED:
-        data = await get_test_redis.get(redis.generate_temp_user_key(req_authcode_id, req_code))
+        data = await get_test_redis.get(redis.generate_temp_user_key(req_authcode_id, req_authcode))
         assert data is None
 
     # API実行後のユーザー数検証
