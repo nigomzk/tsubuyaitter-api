@@ -13,7 +13,7 @@ from app.core.redis import generate_temp_user_key, get_redis_client
 from app.schemas import token_schema
 from app.schemas.user_schema import (
     RequestRegisterUser,
-    RequestVerifyAuthcode,
+    RequestRegisterUserVerifyAuthcode,
     ResponseRegisterUser,
     TempUser,
 )
@@ -68,7 +68,7 @@ async def register_user(
 
 @router.post("/register/verify-authcode", status_code=status.HTTP_200_OK)
 async def verify_authcode(
-    req: RequestVerifyAuthcode,
+    req: RequestRegisterUserVerifyAuthcode,
     db: AsyncSession = Depends(get_session),
     redis: Redis = Depends(get_redis_client),
 ) -> token_schema.Token:
@@ -77,7 +77,7 @@ async def verify_authcode(
     """
 
     # 認証コードの検証
-    key = generate_temp_user_key(req.authcode_id, req.code)
+    key = generate_temp_user_key(req.reception_id, req.authcode)
     data = await redis.get(key)
     if not data:
         raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="認証に失敗しました。")

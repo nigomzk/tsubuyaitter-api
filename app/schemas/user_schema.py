@@ -2,8 +2,8 @@ from datetime import date, datetime
 
 from pydantic import BaseModel, ConfigDict, EmailStr, Field, field_validator
 
+from app.core.config import get_settings
 from app.enums import Flag
-from app.schemas.auth_schema import RequestVerifyAuthcode, ResponseIssueAuthcodeForEmail
 
 
 class TempUser(BaseModel):
@@ -58,17 +58,23 @@ class RequestRegisterUser(BaseModel):
     birthday: date = Field(..., title="生年月日")
 
 
-class ResponseRegisterUser(ResponseIssueAuthcodeForEmail):
+class ResponseRegisterUser(BaseModel):
     """
     ユーザー登録レスポンススキーマ
     """
 
-    pass
+    reception_id: str = Field(..., min_length=36, max_length=36, title="受付ID")
 
 
-class RequestUserVerifyAuthcode(RequestVerifyAuthcode):
+class RequestRegisterUserVerifyAuthcode(BaseModel):
     """
     ユーザー認証コード検証リクエストスキーマ
     """
 
-    pass
+    reception_id: str = Field(..., min_length=36, max_length=36, title="受付ID")
+    authcode: str = Field(
+        ...,
+        min_length=get_settings().AUTHCODE_LENGTH,
+        max_length=get_settings().AUTHCODE_LENGTH,
+        title="認証コード",
+    )

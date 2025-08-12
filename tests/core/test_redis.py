@@ -27,12 +27,12 @@ def test_generate_temp_user_key() -> None:
     """
     一時ユーザー用のRedisキーが以下形式で取得できること。
 
-    "{Prefix}:{authcode_id}:{code}"
+    "{Prefix}:{reception_id}:{authcode}"
     """
-    authcode_id = "00000000-0000-0000-0000-000000000001"
-    code = "123456"
-    expected = f"{redis.PREFIX_TEMP_USER}:{authcode_id}:{code}"
-    result = redis.generate_temp_user_key(authcode_id=authcode_id, code=code)
+    reception_id = "00000000-0000-0000-0000-000000000001"
+    authcode = "123456"
+    expected = f"{redis.PREFIX_TEMP_USER}:{reception_id}:{authcode}"
+    result = redis.generate_temp_user_key(reception_id=reception_id, authcode=authcode)
     assert result == expected
 
 
