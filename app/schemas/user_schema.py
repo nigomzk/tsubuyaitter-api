@@ -48,6 +48,19 @@ class User(BaseModel):
         return value if isinstance(value, date) else datetime.strptime(value, "%Y%m%d")
 
 
+class UserCredential(BaseModel):
+    """
+    ユーザー認証情報スキーマ
+    """
+
+    model_config = ConfigDict(from_attributes=True)
+
+    user_id: int
+    identity_type: str
+    identity: str
+    hashed_password: str
+
+
 class RequestRegisterUser(BaseModel):
     """
     ユーザー登録リクエストスキーマ

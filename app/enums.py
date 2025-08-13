@@ -23,3 +23,15 @@ class HealthCheckStatus(Enum):
 
     HEALTHY = "Healthy"
     UNHEALTHY = "Unhealthy"
+
+
+class IdentityType(Enum):
+    """
+    識別子種別
+
+    USERNAME: username
+    EMAIL: email
+    """
+
+    USERNAME = "username"
+    EMAIL = "email"

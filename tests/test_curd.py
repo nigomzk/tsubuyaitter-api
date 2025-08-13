@@ -5,7 +5,7 @@ from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker
 
 from app import crud
-from app.enums import Flag
+from app.enums import Flag, IdentityType
 from app.models import User
 
 
@@ -17,6 +17,41 @@ async def test_check_connection(get_test_session: async_sessionmaker[AsyncSessio
     async with get_test_session() as db:
         result = await crud.check_connection(db)
         assert result is None
+
+
+@pytest.mark.asyncio
+@pytest.mark.parametrize(
+    ["user_id", "expected_hit", "expected_username"],
+    [
+        pytest.param(1, True, "user1"),
+        pytest.param(9, False, None),
+    ],
+)
+async def test_select_user_by_id(
+    get_test_session: async_sessionmaker[AsyncSession],
+    insert_test_data_user: None,
+    user_id: int,
+    expected_hit: bool,
+    expected_username: str | None,
+) -> None:
+    """
+    select_user_by_idについて以下ケースを検証する。
+
+    +----+-------------------------+---------------------------------+
+    | No | expected hit in search. | expected username (case of hit) |
+    +====+=========================+=================================+
+    | 1  | True                    | user1                           |
+    +----+-------------------------+---------------------------------+
+    | 2  | False                   | -                               |
+    +----+-------------------------+---------------------------------+
+    """
+    async with get_test_session() as db:
+        result = await crud.select_user_by_id(db, user_id)
+        if expected_hit:
+            assert result is not None
+            assert result.username == expected_username
+        else:
+            assert result is None
 
 
 @pytest.mark.asyncio
@@ -119,3 +154,46 @@ async def test_insert_user(get_test_session: async_sessionmaker[AsyncSession]) -
         # 実行後は1件
         result = await db.scalars(select(User))
         assert len(result.all()) == expected_after
+
+
+@pytest.mark.asyncio
+@pytest.mark.parametrize(
+    ["identity", "expected_hit", "expected_user_id", "expected_identity_type"],
+    [
+        pytest.param("user9", False, None, None),
+        pytest.param("user9@sample.com", False, None, None),
+        pytest.param("user1", True, 1, IdentityType.USERNAME.value),
+        pytest.param("user1@sample.com", True, 1, IdentityType.EMAIL.value),
+    ],
+)
+async def test_select_user_credential_by_identity(
+    get_test_session: async_sessionmaker[AsyncSession],
+    insert_test_data_user: None,
+    identity: str,
+    expected_hit: bool,
+    expected_user_id: int | None,
+    expected_identity_type: str | None,
+):
+    """
+    select_user_credential_by_identity について以下ケースを検証する。
+
+    +----+-------------------------------------------+------------------------+-------------------+
+    | No | Case                                      | Expected identity_type | Expected password |
+    +====+===========================================+========================+===================+
+    | 1  | user_credential by email doesn't exist.   | -                      | -                 |
+    +----+-------------------------------------------+------------------------+-------------------+
+    | 2  | user_credential by username doesn't exist.| -                      | -                 |
+    +----+-------------------------------------------+------------------------+-------------------+
+    | 3  | user_credential by email exists.          | username               | password1         |
+    +----+-------------------------------------------+------------------------+-------------------+
+    | 4  | user_credential by username exists.       | email                  | password1         |
+    +----+-------------------------------------------+------------------------+-------------------+
+    """
+    async with get_test_session() as db:
+        result = await crud.select_user_credential_by_identity(db, identity)
+        if expected_hit:
+            assert result is not None
+            assert result.user_id == expected_user_id
+            assert result.identity_type == expected_identity_type
+        else:
+            assert result is None

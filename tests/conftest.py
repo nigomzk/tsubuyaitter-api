@@ -18,8 +18,10 @@ from app.core.config import get_settings
 from app.core.database import DATABASE_OPTION, Base, get_session
 from app.core.email_manager import fm
 from app.core.redis import get_redis_client
+from app.core.security import get_password_hash
+from app.enums import IdentityType
 from app.main import app
-from app.models import User
+from app.models import User, UserCredential
 
 
 @pytest_asyncio.fixture(scope="function")
@@ -110,24 +112,36 @@ async def async_client(
 @pytest_asyncio.fixture(scope="function")
 async def insert_test_data_user(get_test_session: async_sessionmaker[AsyncSession]) -> None:
     """
-    ユーザーテーブルに以下のデータを投入する。
+    ユーザー関連テーブルに以下のデータを投入する。
 
+    Users
+    -----
     +-------+--------+------------+-----+--------+-------------+-------------------+-----------------+
     |user_id|username|account_name|email|birthday|verified_flag|auth_failture_count|account_lock_flag|
     +=======+========+============+=====+========+=============+===================+=================+
-    |1|user1|ユーザー1|user1@sample.com|2000-01-01|1|1|0|
+    | 1     |user1   |ユーザー1    |user1@sample.com|2000-01-01|1|1|0|
     +-------+--------+------------+-----+-------+-------------+--------------------+-----------------+
-    |2|user2|ユーザー2|user2@sample.com|2000-01-01|0|2|0|
+    | 2     |user2   |ユーザー2    |user2@sample.com|2000-01-01|0|2|0|
     +-------+--------+------------+-----+-------+-------------+--------------------+-----------------+
-    |3|user3|ユーザー3|user3@sample.com|2000-01-01|1|3|0|
+    | 3     |user3   |ユーザー3    |user3@sample.com|2000-01-01|1|3|0|
     +-------+--------+------------+-----+-------+-------------+--------------------+-----------------+
+
+    user_credentials
+    ----------------
+    +---------+---------------+------------------+-----------+
+    | user_id | identity_type | identity         | password  |
+    +=========+===============+==================+===========+
+    | 1       | email         | user1@sample.com | password1 |
+    +---------+---------------+------------------+-----------+
+    | 1       | username      | user1            | password1 |
+    +---------+---------------+------------------+-----------+
 
     Parameters
     ----------
     get_test_session: sqlalchemy.ext.asyncio.async_sessionmaker[AsyncSession]
         テスト用DBセッション
     """
-    data = [
+    users = [
         User(
             username=f"user{i}",
             account_name=f"ユーザー{i}",
@@ -139,6 +153,20 @@ async def insert_test_data_user(get_test_session: async_sessionmaker[AsyncSessio
         )
         for i in range(1, 4)
     ]
+    user_ids: list[int] = [1]
+    user_credentials = [
+        UserCredential(
+            user_id=id,
+            identity_type=type.value,
+            identity=(
+                f"user{id}" if type.value == IdentityType.USERNAME.value else f"user{id}@sample.com"
+            ),
+            hashed_password=get_password_hash(f"password{id}"),
+        )
+        for id in user_ids
+        for type in IdentityType
+    ]
     async with get_test_session() as db:
-        db.add_all(data)
+        db.add_all(users)
+        db.add_all(user_credentials)
         await db.commit()
