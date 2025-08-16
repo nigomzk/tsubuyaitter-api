@@ -3,6 +3,7 @@ import string
 from logging import getLogger
 
 from fastapi import HTTPException, status
+from pydantic import SecretStr
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app import crud
@@ -70,6 +71,59 @@ async def generate_initial_username(db: AsyncSession) -> str:
         )
         if not await is_registered_username(db, username):
             return username
+
+
+async def set_password(
+    db: AsyncSession, user_id: int, identity_types: list[IdentityType], password: SecretStr
+) -> None:
+    """
+    パスワードを設定する。
+
+    Parameters
+    ----------
+    db: sqlalchemy.ext.asyncio.AsyncSession
+        DBセッション
+    user_id: int
+        ユーザーID
+    identity_types: list[str]
+        識別子種別リスト
+    password: pydantic.SecretStr
+        パスワード
+    """
+
+    # ユーザー取得
+    user = await crud.select_user_by_id(db, user_id)
+    if not user:
+        logger.error(f"ユーザーが存在しません。(user_id: {user_id})")
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST, detail="不正なリクエストです。"
+        )
+
+    # パスワードをハッシュ化
+    hashed_password = security.get_password_hash(password.get_secret_value())
+
+    for identity_type in identity_types:
+        # 登録済みの認証情報を取得
+        user_credetial = await crud.select_user_credential_by_id_and_identity_type(
+            db, user_id, identity_type.value
+        )
+
+        # 対象の識別子種別の認証情報が存在しない場合、認証情報を登録
+        if user_credetial:
+            await crud.update_user_credential_hashed_password(
+                db, user_id, identity_type.value, hashed_password
+            )
+
+        # 対象の識別子種別の認証情報が存在する場合、認証情報を更新
+        else:
+            if identity_type == IdentityType.EMAIL:
+                await crud.insert_user_credential(
+                    db, user_id, IdentityType.EMAIL.value, user.email, hashed_password
+                )
+            elif identity_type == IdentityType.USERNAME:
+                await crud.insert_user_credential(
+                    db, user_id, IdentityType.USERNAME.value, user.username, hashed_password
+                )
 
 
 async def authenticate_user(db: AsyncSession, identity: str, password: str) -> user_schema.User:

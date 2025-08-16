@@ -14,6 +14,7 @@ from app.schemas import token_schema
 from app.schemas.user_schema import (
     RequestRegisterUser,
     RequestRegisterUserVerifyAuthcode,
+    RequestSetPassword,
     ResponseRegisterUser,
     TempUser,
 )
@@ -107,3 +108,11 @@ async def verify_authcode(
 
     # JWTトークンを返却
     return await token_service.create_tokens(user, redis)
+
+
+@router.post("/init-password", status_code=status.HTTP_200_OK)
+async def init_password(req: RequestSetPassword, db: AsyncSession = Depends(get_session)) -> None:
+    """
+    ユーザーパスワード初期化API
+    """
+    await user_service.set_password(db, req.user_id, req.identity_types, req.password)
