@@ -3,10 +3,12 @@ import re
 import pytest
 import pytest_asyncio
 from fastapi import HTTPException, status
+from pydantic import SecretStr
 from pytest_mock import MockFixture
 from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker
 
 from app.core.config import get_settings
+from app.enums import IdentityType
 from app.models import UserCredential
 from app.services import user_service
 
@@ -112,6 +114,78 @@ async def test_generate_initial_username(
             re.fullmatch(rf"([a-zA-Z0-9]{{{get_settings().USERNAME_MAX_LENGTH}}})", result)
             is not None
         )
+
+
+@pytest.mark.asyncio
+@pytest.mark.parametrize(
+    ["user_id", "identity_types", "is_error", "expected_insert_count", "expected_update_count"],
+    [
+        pytest.param(9, [IdentityType.USERNAME], True, 0, 0),
+        pytest.param(2, [IdentityType.USERNAME], False, 1, 0),
+        pytest.param(1, [IdentityType.USERNAME], False, 0, 1),
+        pytest.param(1, [IdentityType.EMAIL], False, 0, 1),
+        pytest.param(1, [IdentityType.EMAIL, IdentityType.USERNAME], False, 0, 2),
+    ],
+)
+async def test_set_password(
+    get_test_session: async_sessionmaker[AsyncSession],
+    insert_test_data_user: None,
+    mocker: MockFixture,
+    user_id: int,
+    identity_types: list[IdentityType],
+    is_error: bool,
+    expected_insert_count: int,
+    expected_update_count: int,
+):
+    """
+    set_passwordについて以下ケースの検証を行う。
+
+    +--------------------------------------------------------------------+-------------------------+
+    | No | Case                                                          | Expected result         |
+    +====+===============================================================+=========================+
+    | 1  | Set user_id that doesn't exist in user_credentials.           | Raise HTTPException.    |
+    +--------------------------------------------------------------------+-------------------------+
+    | 2  | Set an unexpected identity_type.                              | Raise HTTPException.    |
+    +--------------------------------------------------------------------+-------------------------+
+    | 3  | Set identity_type (email) that exists in user_credentials.    | Update user_credential. |
+    +--------------------------------------------------------------------+-------------------------+
+    | 4  | Set identity_type (username) that exists in user_credentials. | Update user_credential. |
+    +--------------------------------------------------------------------+-------------------------+
+    | 5  | Set multiple identity_type that exists in user_credentials.   | Update user_credentials.|
+    +--------------------------------------------------------------------+-------------------------+
+    """
+    test_password = "updeted_password"
+
+    # mock化
+    mocker.patch("app.core.security.get_password_hash", return_value=test_password)
+    mock_insert_func = mocker.patch("app.crud.insert_user_credential", return_value=None)
+    mock_update_func = mocker.patch(
+        "app.crud.update_user_credential_hashed_password", return_value=None
+    )
+
+    async with get_test_session() as db:
+        if is_error:
+            # 対象の関数を実行
+            with pytest.raises(HTTPException) as e:
+                await user_service.set_password(
+                    db,
+                    user_id=user_id,
+                    identity_types=identity_types,
+                    password=SecretStr(test_password),
+                )
+                assert isinstance(e.value, HTTPException)
+                assert e.value.status_code == status.HTTP_400_BAD_REQUEST
+                assert e.value.detail == "不正なリクエストです。"
+        else:
+            # 対象の関数を実行
+            await user_service.set_password(
+                db,
+                user_id=user_id,
+                identity_types=identity_types,
+                password=SecretStr(test_password),
+            )
+            assert mock_insert_func.call_count == expected_insert_count
+            assert mock_update_func.call_count == expected_update_count
 
 
 @pytest.mark.asyncio

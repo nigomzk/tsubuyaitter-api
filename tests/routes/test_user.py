@@ -11,6 +11,7 @@ from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker
 
 from app.core import redis
 from app.core.config import get_settings
+from app.enums import IdentityType
 from app.models import User
 from app.schemas import user_schema
 
@@ -188,3 +189,79 @@ async def test_verify_authcode(
         # 異常系の場合、DBにユーザーが登録されないこと
         else:
             assert len(result) == expected_before
+
+
+@pytest.mark.asyncio
+async def test_init_password_ok(
+    async_client: AsyncClient,
+    insert_test_data_user: None,
+):
+    """
+    ユーザーパスワード初期化APIの正常系を検証する。
+    """
+    test_request: dict[str, int | str | list[str]] = {
+        "user_id": 1,
+        "identity_types": ["email", "username"],
+        "password": "P@ssw0rd",
+    }
+
+    # API呼び出し
+    response = await async_client.post("/user/init-password", json=test_request)
+
+    # 結果検証
+    assert response.status_code == status.HTTP_200_OK
+
+
+@pytest.mark.asyncio
+@pytest.mark.parametrize(
+    ["req_identity_types", "req_password"],
+    [
+        pytest.param([], "P@ssw0rd"),
+        pytest.param(["dummy"], "P@ssw0rd"),
+        pytest.param([IdentityType.EMAIL.value], "P@ssw0r"),
+        pytest.param([IdentityType.EMAIL.value], "P@ssw0rd1234567890123"),
+        pytest.param([IdentityType.EMAIL.value], "P@ssword"),
+        pytest.param([IdentityType.EMAIL.value], "p@ssw0rd"),
+        pytest.param([IdentityType.EMAIL.value], "P@SSW0RD"),
+        pytest.param([IdentityType.EMAIL.value], "Passw0rd"),
+    ],
+)
+async def test_init_password_ng_validate_error(
+    async_client: AsyncClient,
+    req_identity_types: list[str],
+    req_password: str,
+):
+    """
+    ユーザーパスワード初期化APIの異常系（バリデーションエラー）を検証する。
+
+    +----+-------------------------------------------+
+    | No | case                                      |
+    +====+===========================================+
+    | 1  | identity_types is empty.                  |
+    +----+-------------------------------------------+
+    | 2  | identity_types has invalid value.         |
+    +----+-------------------------------------------+
+    | 3  | password is too short.                    |
+    +----+-------------------------------------------+
+    | 4  | password is too long.                     |
+    +----+-------------------------------------------+
+    | 5  | password has no digit.                    |
+    +----+-------------------------------------------+
+    | 6  | password has no upper character.          |
+    +----+-------------------------------------------+
+    | 7  | password has no lower character.          |
+    +----+-------------------------------------------+
+    | 8  | password has no special symbol character. |
+    +----+-------------------------------------------+
+    """
+    test_request: dict[str, int | str | list[str]] = {
+        "user_id": 1,
+        "identity_types": req_identity_types,
+        "password": req_password,
+    }
+
+    # API呼び出し
+    response = await async_client.post("/user/init-password", json=test_request)
+
+    # 結果検証
+    assert response.status_code == status.HTTP_422_UNPROCESSABLE_ENTITY
