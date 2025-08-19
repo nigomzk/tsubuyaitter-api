@@ -1,0 +1,59 @@
+version: 1
+disable_exiting_false: false
+formatters:
+  # uvicorn log用フォーマット
+  f_uvicorn:
+    format: "%(asctime)s [%(levelname)-8s] %(name)-26s - %(message)s"
+  # application log用フォーマット
+  f_app:
+    format: "%(asctime)s [%(levelname)-8s] %(name)-26s (%(lineno)-4s) - %(message)s"
+handlers:
+  # 標準出力設定
+  h_console_uvicorn:
+    class: logging.StreamHandler
+    formatter: f_uvicorn
+    stream: ext://sys.stdout
+  h_console_app:
+    class: logging.StreamHandler
+    formatter: f_app
+    stream: ext://sys.stdout
+  # ログファイル出力設定
+  h_file_uvicorn:
+    class: logging.handlers.TimedRotatingFileHandler
+    formatter: f_uvicorn
+    filename: logs/uvicorn.log
+    when: midnight
+    backupCount: 30
+    encoding: utf-8
+  h_file_app:
+    class: logging.handlers.TimedRotatingFileHandler
+    formatter: f_app
+    filename: logs/application.log
+    when: midnight
+    backupCount: 30
+    encoding: utf-8
+loggers:
+  # uvicornで備わっているログはpropagateをtrueにしてroot設定を引継ぐ
+  uvicorn:
+    propagate: true
+  uvicorn.error:
+    propagate: true
+  uvicorn.access:
+    propagate: true
+  sqlalchemy.engine:
+    level: INFO
+    handlers:
+      - h_console_app
+      - h_file_app
+    propagate: false
+  app:
+    level: INFO
+    handlers:
+      - h_console_app
+      - h_file_app
+    propagate: false
+  root:
+    level: INFO
+    handlers:
+      - h_console_uvicorn
+      - h_file_uvicorn

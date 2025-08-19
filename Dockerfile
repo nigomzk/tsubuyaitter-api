@@ -37,4 +37,4 @@ RUN --mount=type=cache,target=/root/.cache/uv \
   uv sync --all-groups
 # 本番環境の場合、--all-groupsオプションは外す
 
-CMD ["uvicorn", "app.main:app", "--reload", "--host=0.0.0.0", "--port=5000"]
+CMD ["uvicorn", "app.main:app", "--reload", "--host=0.0.0.0", "--port=5000", "--log-config=log_config.yml"]
