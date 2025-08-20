@@ -1,4 +1,4 @@
-from fastapi import APIRouter, Depends, status
+from fastapi import APIRouter, Depends, Header, status
 from fastapi.encoders import jsonable_encoder
 from redis.asyncio.client import Redis
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -8,6 +8,7 @@ from app import crud
 from app.core import redis
 from app.core.database import get_session
 from app.enums import HealthCheckStatus
+from app.schemas.header_schema import CommonHeders
 from app.schemas.health_check import HealthCheckItem, ResposeHealthCheck
 
 router = APIRouter(tags=["health_check"])
@@ -15,7 +16,9 @@ router = APIRouter(tags=["health_check"])
 
 @router.get("/health-check")
 async def health_check(
-    db: AsyncSession = Depends(get_session), redis_client: Redis = Depends(redis.get_redis_client)
+    headers: CommonHeders = Header(),
+    db: AsyncSession = Depends(get_session),
+    redis_client: Redis = Depends(redis.get_redis_client),
 ):
     """
     ヘルスチェックAPI

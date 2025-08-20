@@ -76,6 +76,8 @@ async def test_health_check(
     | 4  | Fail     | Fail        | 503         | UnHealthy | UnHealthy    | Unhealthy  |
     +----+----------+-------------+-------------+-----------+--------------+------------+
     """
+    # リクエストデータ定義
+    header_data = {"request-id": "00000000-0000-0000-0000-000000000001"}
     # 接続失敗するようにMock化
     if not is_db_connected:
         mocker.patch("app.crud.check_connection", side_effect=Exception("something exception"))
@@ -83,7 +85,7 @@ async def test_health_check(
         mocker.patch(
             "app.core.redis.check_connection", side_effect=Exception("something exception")
         )
-    response = await async_client.get("/health-check")
+    response = await async_client.get("/health-check", headers=header_data)
     assert response.status_code == expected_http_status
 
     # App全体のヘルスチェック結果
