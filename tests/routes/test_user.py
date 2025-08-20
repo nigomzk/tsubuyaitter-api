@@ -89,9 +89,10 @@ async def test_register_user(
         "email": test_email,
         "birthday": test_birthday.strftime("%Y-%m-%d"),
     }
+    header_data = {"request-id": "00000000-0000-0000-0000-000000000001"}
 
     # API呼び出し
-    response = await async_client.post("/user/register", json=reqest_data)
+    response = await async_client.post("/user/register", json=reqest_data, headers=header_data)
 
     # HTTPステータスコードが期待通りであること
     assert response.status_code == expected_http_status
@@ -165,7 +166,10 @@ async def test_verify_authcode(
     # API呼び出し
     req_authcode_id = f"00000000-0000-0000-0000-{req_reception_id}"
     request_data = {"reception_id": req_authcode_id, "authcode": req_authcode}
-    response = await async_client.post("/user/register/verify-authcode", json=request_data)
+    header_data = {"request-id": "00000000-0000-0000-0000-000000000001"}
+    response = await async_client.post(
+        "/user/register/verify-authcode", json=request_data, headers=header_data
+    )
 
     # HTTPステータスコードが期待通りであること
     assert response.status_code == expected_http_status
@@ -204,9 +208,12 @@ async def test_init_password_ok(
         "identity_types": ["email", "username"],
         "password": "P@ssw0rd",
     }
+    test_header = {"request-id": "00000000-0000-0000-0000-000000000001"}
 
     # API呼び出し
-    response = await async_client.post("/user/init-password", json=test_request)
+    response = await async_client.post(
+        "/user/init-password", json=test_request, headers=test_header
+    )
 
     # 結果検証
     assert response.status_code == status.HTTP_200_OK
@@ -259,9 +266,12 @@ async def test_init_password_ng_validate_error(
         "identity_types": req_identity_types,
         "password": req_password,
     }
+    test_header = {"request-id": "00000000-0000-0000-0000-000000000001"}
 
     # API呼び出し
-    response = await async_client.post("/user/init-password", json=test_request)
+    response = await async_client.post(
+        "/user/init-password", json=test_request, headers=test_header
+    )
 
     # 結果検証
     assert response.status_code == status.HTTP_422_UNPROCESSABLE_ENTITY

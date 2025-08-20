@@ -1,7 +1,7 @@
 import uuid
 from datetime import timedelta
 
-from fastapi import APIRouter, BackgroundTasks, Depends, HTTPException, status
+from fastapi import APIRouter, BackgroundTasks, Depends, Header, HTTPException, status
 from redis.asyncio.client import Redis
 from sqlalchemy.ext.asyncio import AsyncSession
 
@@ -10,7 +10,7 @@ from app.core import email_manager, security
 from app.core.config import get_settings
 from app.core.database import get_session
 from app.core.redis import generate_temp_user_key, get_redis_client
-from app.schemas import token_schema
+from app.schemas import header_schema, token_schema
 from app.schemas.user_schema import (
     RequestRegisterUser,
     RequestRegisterUserVerifyAuthcode,
@@ -27,6 +27,7 @@ router = APIRouter(prefix="/user", tags=["user"])
 async def register_user(
     req: RequestRegisterUser,
     background_tasks: BackgroundTasks,
+    headers: header_schema.CommonHeders = Header(),
     db: AsyncSession = Depends(get_session),
     redis: Redis = Depends(get_redis_client),
 ) -> ResponseRegisterUser:
@@ -70,6 +71,7 @@ async def register_user(
 @router.post("/register/verify-authcode", status_code=status.HTTP_200_OK)
 async def verify_authcode(
     req: RequestRegisterUserVerifyAuthcode,
+    headers: header_schema.CommonHeders = Header(),
     db: AsyncSession = Depends(get_session),
     redis: Redis = Depends(get_redis_client),
 ) -> token_schema.Token:
@@ -111,7 +113,11 @@ async def verify_authcode(
 
 
 @router.post("/init-password", status_code=status.HTTP_200_OK)
-async def init_password(req: RequestSetPassword, db: AsyncSession = Depends(get_session)) -> None:
+async def init_password(
+    req: RequestSetPassword,
+    headers: header_schema.CommonHeders = Header(),
+    db: AsyncSession = Depends(get_session),
+) -> None:
     """
     ユーザーパスワード初期化API
     """
