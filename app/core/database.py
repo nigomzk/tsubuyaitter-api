@@ -1,7 +1,9 @@
-from collections.abc import AsyncGenerator
+from collections.abc import AsyncGenerator, Sequence
 from typing import Any
 from urllib.parse import quote_plus
 
+from sqlalchemy import event
+from sqlalchemy.engine import Connection
 from sqlalchemy.ext.asyncio import (
     AsyncEngine,
     AsyncSession,
@@ -9,8 +11,13 @@ from sqlalchemy.ext.asyncio import (
     create_async_engine,
 )
 from sqlalchemy.orm import declarative_base
+from sqlalchemy.sql.expression import ClauseElement
 
 from app.core.config import get_settings
+from app.core.logger import AppLogger
+
+# ロガー設定
+logger: AppLogger = AppLogger(__name__)
 
 # DB接続先URL
 DATABASE_URL: str = (
@@ -54,3 +61,33 @@ async def get_session() -> AsyncGenerator[AsyncSession, Any]:
     """
     async with async_session() as session:
         yield session
+
+
+@event.listens_for(engine.sync_engine, "before_execute")
+def logging_before_execute(
+    conn: Connection,
+    clause_element: ClauseElement,
+    multiparams: Sequence[dict[str, Any]] | None = None,
+    params: dict[str, Any] | None = None,
+    execution_options: dict[str, Any] | None = None,
+) -> None:
+    """
+    実行するSQLをログ出力するイベントリスナー
+
+    Parameters
+    ----------
+    async_session: AsyncGenerator[AsyncSession, Any])
+        DBセッション
+    clause_element: ClauseElement
+        SQL式構造
+    multiparams: Sequence[dict[str, Any]] | None
+        複数のバインドパラメータセット
+    params: dict[str, Any] | None
+        単一のバインドパラメータセット
+    execution_options: dict[str, Any] | None
+        実行オプション
+    """
+    compiled = clause_element.compile(dialect=engine.dialect)
+    logger.info(f"{compiled}")
+    if compiled.params:
+        logger.debug(str(compiled.params))

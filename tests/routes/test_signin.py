@@ -28,6 +28,7 @@ async def test_signin_for_authentication_successful(
         "client_id": "",
         "client_secret": "",
     }
+    header_data = {"request-id": "00000000-0000-0000-0000-000000000001"}
 
     # モック定義
     mocked_user = user_schema.User(
@@ -43,7 +44,11 @@ async def test_signin_for_authentication_successful(
     mocker.patch("app.services.user_service.authenticate_user", return_value=mocked_user)
 
     # API実行
-    response = await async_client.post("/signin", data=request_data)
+    response = await async_client.post(
+        "/signin",
+        data=request_data,
+        headers=header_data,
+    )
 
     # HTTPステータスコードが 200 であること
     assert response.status_code == status.HTTP_200_OK
@@ -85,6 +90,7 @@ async def test_signin_for_authentication_failed(
         "client_id": "",
         "client_secret": "",
     }
+    header_data = {"request-id": "00000000-0000-0000-0000-000000000001"}
 
     # モック定義
     mocker.patch(
@@ -93,7 +99,7 @@ async def test_signin_for_authentication_failed(
     )
 
     # API実行
-    response = await async_client.post("/signin", data=request_data)
+    response = await async_client.post("/signin", data=request_data, headers=header_data)
 
     # HTTPステータスコードが 400 であること
     assert response.status_code == status.HTTP_400_BAD_REQUEST

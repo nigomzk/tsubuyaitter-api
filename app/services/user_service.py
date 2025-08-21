@@ -1,6 +1,5 @@
 import secrets
 import string
-from logging import getLogger
 
 from fastapi import HTTPException, status
 from pydantic import SecretStr
@@ -9,10 +8,11 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from app import crud
 from app.core import security
 from app.core.config import get_settings
+from app.core.logger import AppLogger
 from app.enums import IdentityType
 from app.schemas import user_schema
 
-logger = getLogger(f"app.{__name__}")
+logger: AppLogger = AppLogger(f"{__name__}")
 
 
 async def is_registered_email(db: AsyncSession, email: str) -> bool:
