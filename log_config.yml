@@ -40,12 +40,6 @@ loggers:
     propagate: true
   uvicorn.access:
     propagate: true
-  sqlalchemy.engine:
-    level: INFO
-    handlers:
-      - h_console_app
-      - h_file_app
-    propagate: false
   app:
     # applicationのログレベルはenvファイルで設定する
     # level: INFO
