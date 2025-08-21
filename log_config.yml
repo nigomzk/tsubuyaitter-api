@@ -3,10 +3,10 @@ disable_exiting_false: false
 formatters:
   # uvicorn log用フォーマット
   f_uvicorn:
-    format: "%(asctime)s [%(levelname)-8s] %(name)-26s - %(message)s"
+    format: "%(asctime)s [%(levelname)-8s] [%(name)-26s] %(message)s"
   # application log用フォーマット
   f_app:
-    format: "%(asctime)s [%(levelname)-8s] %(name)-26s (%(lineno)-4s) - %(message)s"
+    format: "%(asctime)s [%(levelname)-8s] [%(name)-26s(%(lineno)-4s)] %(message)s"
 handlers:
   # 標準出力設定
   h_console_uvicorn:
@@ -47,7 +47,8 @@ loggers:
       - h_file_app
     propagate: false
   app:
-    level: INFO
+    # applicationのログレベルはenvファイルで設定する
+    # level: INFO
     handlers:
       - h_console_app
       - h_file_app

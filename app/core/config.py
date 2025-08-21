@@ -16,6 +16,7 @@ class Settings(BaseSettings):
     # 型チェック
     APP_ENV: str
     BASE_URL: str
+    LOG_LEVEL: str
     POSTGRES_DB: str
     POSTGRES_USER: str
     POSTGRES_PASSWORD: str
