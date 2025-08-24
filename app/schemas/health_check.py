@@ -18,22 +18,3 @@ class HealthCheckItem(BaseModel):
     name: str
     status: HealthCheckStatus | str = HealthCheckStatus.HEALTHY
     message: str = "Success to connect server."
-
-
-class ResposeHealthCheck(BaseModel):
-    """
-    ヘルスチェックレスポンス
-
-    Attributes
-    ----------
-    status: HelthCheckStatus | str
-        ステータス
-    message: str
-        メッセージ
-    contents: list[HealthCheckItem]
-        サーバ毎のヘルスチェック結果
-    """
-
-    status: HealthCheckStatus | str = HealthCheckStatus.HEALTHY
-    message: str = "Success to connect servers."
-    contents: list[HealthCheckItem] = []

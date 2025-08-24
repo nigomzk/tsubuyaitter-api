@@ -11,12 +11,8 @@ from app.core.config import get_settings
 from app.core.database import get_session
 from app.core.redis import generate_temp_user_key, get_redis_client
 from app.errors import ApiException
-from app.schemas import header_schema, token_schema
+from app.schemas import header_schema, request_schema, response_schema, token_schema
 from app.schemas.user_schema import (
-    RequestRegisterUser,
-    RequestRegisterUserVerifyAuthcode,
-    RequestSetPassword,
-    ResponseRegisterUser,
     TempUser,
 )
 from app.services import token_service, user_service
@@ -26,12 +22,12 @@ router = APIRouter(prefix="/user", tags=["user"])
 
 @router.post("/register", status_code=status.HTTP_200_OK)
 async def register_user(
-    req: RequestRegisterUser,
+    req: request_schema.UserRegister,
     background_tasks: BackgroundTasks,
     headers: header_schema.CommonHeders = Header(),
     db: AsyncSession = Depends(get_session),
     redis: Redis = Depends(get_redis_client),
-) -> ResponseRegisterUser:
+) -> response_schema.UserRegister:
     """
     ユーザー仮登録API
     """
@@ -66,12 +62,12 @@ async def register_user(
         context,
     )
 
-    return ResponseRegisterUser(reception_id=reception_id)
+    return response_schema.UserRegister(reception_id=reception_id)
 
 
 @router.post("/register/verify-authcode", status_code=status.HTTP_200_OK)
 async def verify_authcode(
-    req: RequestRegisterUserVerifyAuthcode,
+    req: request_schema.UserRegisterVerifyAuthcode,
     headers: header_schema.CommonHeders = Header(),
     db: AsyncSession = Depends(get_session),
     redis: Redis = Depends(get_redis_client),
@@ -115,7 +111,7 @@ async def verify_authcode(
 
 @router.post("/init-password", status_code=status.HTTP_200_OK)
 async def init_password(
-    req: RequestSetPassword,
+    req: request_schema.UserSetPassword,
     headers: header_schema.CommonHeders = Header(),
     db: AsyncSession = Depends(get_session),
 ) -> None:

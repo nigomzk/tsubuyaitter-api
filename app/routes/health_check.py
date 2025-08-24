@@ -8,8 +8,9 @@ from app import crud
 from app.core import redis
 from app.core.database import get_session
 from app.enums import HealthCheckStatus
+from app.schemas import response_schema
 from app.schemas.header_schema import CommonHeders
-from app.schemas.health_check import HealthCheckItem, ResposeHealthCheck
+from app.schemas.health_check import HealthCheckItem
 
 router = APIRouter(tags=["health_check"])
 
@@ -24,7 +25,7 @@ async def health_check(
     ヘルスチェックAPI
     """
 
-    res = ResposeHealthCheck()
+    res = response_schema.HealthCheck()
     status_code = status.HTTP_200_OK
 
     # DBのヘルスチェック
