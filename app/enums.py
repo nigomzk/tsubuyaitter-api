@@ -13,7 +13,7 @@ class Flag(Enum):
     ON = "1"
 
 
-class HealthCheckStatus(Enum):
+class HealthcheckStatus(Enum):
     """
     ヘルスチェックステータス
 

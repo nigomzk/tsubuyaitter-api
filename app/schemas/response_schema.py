@@ -1,10 +1,10 @@
 from pydantic import BaseModel, Field
 
-from app.enums import HealthCheckStatus
-from app.schemas.health_check import HealthCheckItem
+from app.enums import HealthcheckStatus
+from app.schemas.healthcheck_schema import HealthcheckItem
 
 
-class HealthCheck(BaseModel):
+class Healthcheck(BaseModel):
     """
     ヘルスチェックレスポンススキーマ
 
@@ -18,9 +18,9 @@ class HealthCheck(BaseModel):
         サーバ毎のヘルスチェック結果
     """
 
-    status: HealthCheckStatus | str = HealthCheckStatus.HEALTHY
+    status: HealthcheckStatus | str = HealthcheckStatus.HEALTHY
     message: str = "Success to connect servers."
-    contents: list[HealthCheckItem] = []
+    contents: list[HealthcheckItem] = []
 
 
 class UserRegister(BaseModel):

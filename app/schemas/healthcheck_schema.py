@@ -1,20 +1,20 @@
 from pydantic import BaseModel
 
-from app.enums import HealthCheckStatus
+from app.enums import HealthcheckStatus
 
 
-class HealthCheckItem(BaseModel):
+class HealthcheckItem(BaseModel):
     """
     ヘルスチェック項目
 
     name: str
         項目名
-    status: HelthCheckStatus | str
+    status: HelthcheckStatus | str
         ステータス
     message: str
         メッセージ
     """
 
     name: str
-    status: HealthCheckStatus | str = HealthCheckStatus.HEALTHY
+    status: HealthcheckStatus | str = HealthcheckStatus.HEALTHY
     message: str = "Success to connect server."

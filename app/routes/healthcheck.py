@@ -7,16 +7,16 @@ from starlette.responses import JSONResponse
 from app import crud
 from app.core import redis
 from app.core.database import get_session
-from app.enums import HealthCheckStatus
+from app.enums import HealthcheckStatus
 from app.schemas import response_schema
 from app.schemas.header_schema import CommonHeders
-from app.schemas.health_check import HealthCheckItem
+from app.schemas.healthcheck_schema import HealthcheckItem
 
 router = APIRouter(tags=["health_check"])
 
 
-@router.get("/health-check")
-async def health_check(
+@router.get("/healthcheck")
+async def healthcheck(
     headers: CommonHeders = Header(),
     db: AsyncSession = Depends(get_session),
     redis_client: Redis = Depends(redis.get_redis_client),
@@ -25,30 +25,30 @@ async def health_check(
     ヘルスチェックAPI
     """
 
-    res = response_schema.HealthCheck()
+    res = response_schema.Healthcheck()
     status_code = status.HTTP_200_OK
 
     # DBのヘルスチェック
-    db_health_check = HealthCheckItem(name="database")
+    db_health_check = HealthcheckItem(name="database")
     try:
         await crud.check_connection(db)
     except Exception:
-        res.status = HealthCheckStatus.UNHEALTHY
+        res.status = HealthcheckStatus.UNHEALTHY
         res.message = "Faild to connect servers."
-        db_health_check.status = HealthCheckStatus.UNHEALTHY
+        db_health_check.status = HealthcheckStatus.UNHEALTHY
         db_health_check.message = "Faild to get connection database."
         status_code = status.HTTP_503_SERVICE_UNAVAILABLE
     res.contents.append(db_health_check)
 
     # redisのヘルスチェック
-    redis_health_check = HealthCheckItem(name="redis")
+    redis_health_check = HealthcheckItem(name="redis")
     try:
         await redis.check_connection(redis_client)
     except Exception as e:
         print(e)
-        res.status = HealthCheckStatus.UNHEALTHY
+        res.status = HealthcheckStatus.UNHEALTHY
         res.message = "Faild to connect servers."
-        redis_health_check.status = HealthCheckStatus.UNHEALTHY
+        redis_health_check.status = HealthcheckStatus.UNHEALTHY
         redis_health_check.message = "Faild to get connection redis."
         status_code = status.HTTP_503_SERVICE_UNAVAILABLE
     res.contents.append(redis_health_check)
