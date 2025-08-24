@@ -4,10 +4,12 @@ import time
 from collections.abc import Awaitable, Callable
 
 from fastapi import Request, Response
+from fastapi.responses import JSONResponse
 from starlette.concurrency import iterate_in_threadpool
 from starlette.middleware.base import BaseHTTPMiddleware
 
 from app.core.logger import AppLogger, request_id_contextvar
+from app.errors import ApiException, SystemException
 
 logger: AppLogger = AppLogger(f"{__name__}")
 
@@ -60,4 +62,23 @@ class LoggingMiddleware(BaseHTTPMiddleware):
             f"URL={request.url}, http_status={response.status_code}, "
             f"response_time={process_time:.4f}"
         )
+        return response
+
+
+class ErrorHandlingMiddleware(BaseHTTPMiddleware):
+    """
+    エラーハンドリングをするミドルウェア
+    """
+
+    async def dispatch(
+        self, request: Request, call_next: Callable[[Request], Awaitable[Response]]
+    ) -> Response:
+        try:
+            response = await call_next(request)
+        except ApiException as ae:
+            response = JSONResponse(ae.detail, status_code=ae.status_code)
+        except Exception as e:
+            logger.exception("システムエラーが発生しました。")
+            se = SystemException(e)
+            response = JSONResponse(se.detail, status_code=se.status_code)
         return response

@@ -1,7 +1,7 @@
 import uuid
 from datetime import timedelta
 
-from fastapi import APIRouter, BackgroundTasks, Depends, Header, HTTPException, status
+from fastapi import APIRouter, BackgroundTasks, Depends, Header, status
 from redis.asyncio.client import Redis
 from sqlalchemy.ext.asyncio import AsyncSession
 
@@ -10,6 +10,7 @@ from app.core import email_manager, security
 from app.core.config import get_settings
 from app.core.database import get_session
 from app.core.redis import generate_temp_user_key, get_redis_client
+from app.errors import ApiException
 from app.schemas import header_schema, token_schema
 from app.schemas.user_schema import (
     RequestRegisterUser,
@@ -36,9 +37,9 @@ async def register_user(
     """
     # メールアドレス重複チェック
     if await user_service.is_registered_email(db, req.email):
-        raise HTTPException(
+        raise ApiException(
             status_code=status.HTTP_400_BAD_REQUEST,
-            detail="このメールアドレスはすでに利用されているため使用できません。",
+            msg="このメールアドレスはすでに利用されているため使用できません。",
         )
 
     # 受付ID、認証コード生成
@@ -83,7 +84,7 @@ async def verify_authcode(
     key = generate_temp_user_key(req.reception_id, req.authcode)
     data = await redis.get(key)
     if not data:
-        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="認証に失敗しました。")
+        raise ApiException(status_code=status.HTTP_401_UNAUTHORIZED, msg="認証に失敗しました。")
     temp_user = TempUser.model_validate_json(data)
 
     # キャッシュ上の一時ユーザー情報を削除
@@ -91,9 +92,9 @@ async def verify_authcode(
 
     # メールアドレス重複チェック
     if await user_service.is_registered_email(db, temp_user.email):
-        raise HTTPException(
+        raise ApiException(
             status_code=status.HTTP_400_BAD_REQUEST,
-            detail="問題が発生しました。最初からやり直してください。",
+            msg="問題が発生しました。最初からやり直してください。",
         )
 
     # ユニークな初期ユーザー名の生成
