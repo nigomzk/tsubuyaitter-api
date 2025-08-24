@@ -3,7 +3,7 @@ from fastapi import status
 from httpx import AsyncClient
 from pytest_mock import MockFixture
 
-from app.enums import HealthCheckStatus
+from app.enums import HealthcheckStatus
 
 
 @pytest.mark.asyncio
@@ -21,37 +21,37 @@ from app.enums import HealthCheckStatus
             True,
             True,
             status.HTTP_200_OK,
-            HealthCheckStatus.HEALTHY.value,
-            HealthCheckStatus.HEALTHY.value,
-            HealthCheckStatus.HEALTHY.value,
+            HealthcheckStatus.HEALTHY.value,
+            HealthcheckStatus.HEALTHY.value,
+            HealthcheckStatus.HEALTHY.value,
         ),
         pytest.param(
             False,
             True,
             status.HTTP_503_SERVICE_UNAVAILABLE,
-            HealthCheckStatus.UNHEALTHY.value,
-            HealthCheckStatus.HEALTHY.value,
-            HealthCheckStatus.UNHEALTHY.value,
+            HealthcheckStatus.UNHEALTHY.value,
+            HealthcheckStatus.HEALTHY.value,
+            HealthcheckStatus.UNHEALTHY.value,
         ),
         pytest.param(
             True,
             False,
             status.HTTP_503_SERVICE_UNAVAILABLE,
-            HealthCheckStatus.HEALTHY.value,
-            HealthCheckStatus.UNHEALTHY.value,
-            HealthCheckStatus.UNHEALTHY.value,
+            HealthcheckStatus.HEALTHY.value,
+            HealthcheckStatus.UNHEALTHY.value,
+            HealthcheckStatus.UNHEALTHY.value,
         ),
         pytest.param(
             False,
             False,
             status.HTTP_503_SERVICE_UNAVAILABLE,
-            HealthCheckStatus.UNHEALTHY.value,
-            HealthCheckStatus.UNHEALTHY.value,
-            HealthCheckStatus.UNHEALTHY.value,
+            HealthcheckStatus.UNHEALTHY.value,
+            HealthcheckStatus.UNHEALTHY.value,
+            HealthcheckStatus.UNHEALTHY.value,
         ),
     ],
 )
-async def test_health_check(
+async def test_healthcheck(
     async_client: AsyncClient,
     mocker: MockFixture,
     is_db_connected: bool,
@@ -85,15 +85,15 @@ async def test_health_check(
         mocker.patch(
             "app.core.redis.check_connection", side_effect=Exception("something exception")
         )
-    response = await async_client.get("/health-check", headers=header_data)
+    response = await async_client.get("/healthcheck", headers=header_data)
     assert response.status_code == expected_http_status
 
     # App全体のヘルスチェック結果
     response_obj = response.json()
     assert response_obj["status"] == expected_app_health
 
-    healthcheck_list = response_obj["contents"]
-    for item in healthcheck_list:
+    Healthcheck_list = response_obj["contents"]
+    for item in Healthcheck_list:
         # DBのヘルスチェック結果
         if item["name"] == "database":
             assert item["status"] == expected_db_health
