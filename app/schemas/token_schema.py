@@ -1,4 +1,4 @@
-from pydantic import BaseModel
+from pydantic import BaseModel, SecretStr, field_serializer
 
 
 class Payload(BaseModel):
@@ -19,6 +19,10 @@ class Token(BaseModel):
     トークンスキーマ
     """
 
-    access_token: str
-    refresh_token: str
+    access_token: SecretStr
+    refresh_token: SecretStr
     token_type: str = "bearer"
+
+    @field_serializer("access_token", "refresh_token", when_used="json")
+    def dump_secret(self, v: SecretStr):
+        return v.get_secret_value()
