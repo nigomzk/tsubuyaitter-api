@@ -2,13 +2,14 @@ import re
 
 import pytest
 import pytest_asyncio
-from fastapi import HTTPException, status
+from fastapi import status
 from pydantic import SecretStr
 from pytest_mock import MockFixture
 from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker
 
 from app.core.config import get_settings
 from app.enums import IdentityType
+from app.errors import ApiException
 from app.models import UserCredential
 from app.services import user_service
 
@@ -143,9 +144,9 @@ async def test_set_password(
     +--------------------------------------------------------------------+-------------------------+
     | No | Case                                                          | Expected result         |
     +====+===============================================================+=========================+
-    | 1  | Set user_id that doesn't exist in user_credentials.           | Raise HTTPException.    |
+    | 1  | Set user_id that doesn't exist in user_credentials.           | Raise ApiException.     |
     +--------------------------------------------------------------------+-------------------------+
-    | 2  | Set an unexpected identity_type.                              | Raise HTTPException.    |
+    | 2  | Set an unexpected identity_type.                              | Raise ApiException.     |
     +--------------------------------------------------------------------+-------------------------+
     | 3  | Set identity_type (email) that exists in user_credentials.    | Update user_credential. |
     +--------------------------------------------------------------------+-------------------------+
@@ -166,16 +167,19 @@ async def test_set_password(
     async with get_test_session() as db:
         if is_error:
             # 対象の関数を実行
-            with pytest.raises(HTTPException) as e:
+            with pytest.raises(ApiException) as e:
                 await user_service.set_password(
                     db,
                     user_id=user_id,
                     identity_types=identity_types,
                     password=SecretStr(test_password),
                 )
-                assert isinstance(e.value, HTTPException)
+                assert isinstance(e.value, ApiException)
                 assert e.value.status_code == status.HTTP_400_BAD_REQUEST
-                assert e.value.detail == "不正なリクエストです。"
+                detail = e.value.detail
+                assert detail["error"]["code"] == status.HTTP_400_BAD_REQUEST
+                assert detail["error"]["message"] == "不正なリクエストです。"
+
         else:
             # 対象の関数を実行
             await user_service.set_password(
@@ -220,11 +224,11 @@ async def test_authenticate_user(
     +-------------------------------------------------------------+----------------------+
     | Authentication successful by email. (Normal case)           | Return User.         |
     +-------------------------------------------------------------+----------------------+
-    | Password mismatch. (Abnormal case)                          | Raise HTTPException. |
+    | Password mismatch. (Abnormal case)                          | Raise ApiException.  |
     +-------------------------------------------------------------+----------------------+
-    | User Credential doesn't exsits. (Abnormal case)             | Raise HTTPException. |
+    | User Credential doesn't exsits. (Abnormal case)             | Raise ApiException.  |
     +-------------------------------------------------------------+----------------------+
-    | Authenticate by undifined user credential. (Abnormal case)  | Raise HTTPException. |
+    | Authenticate by undifined user credential. (Abnormal case)  | Raise ApiException.  |
     +-------------------------------------------------------------+----------------------+
     """
     async with get_test_session() as db:
@@ -234,9 +238,11 @@ async def test_authenticate_user(
             )
             assert result.user_id == expected_user_id
         else:
-            with pytest.raises(HTTPException) as e:
+            with pytest.raises(ApiException) as e:
                 await user_service.authenticate_user(db, test_identity, test_password)
 
-            assert isinstance(e.value, HTTPException)
+            assert isinstance(e.value, ApiException)
             assert e.value.status_code == status.HTTP_400_BAD_REQUEST
-            assert e.value.detail == "ユーザー名かパスワードが間違っています。"
+            detail = e.value.detail
+            assert detail["error"]["code"] == status.HTTP_400_BAD_REQUEST
+            assert detail["error"]["message"] == "ユーザー名かパスワードが間違っています。"

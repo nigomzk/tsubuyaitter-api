@@ -1,7 +1,7 @@
 import secrets
 import string
 
-from fastapi import HTTPException, status
+from fastapi import status
 from pydantic import SecretStr
 from sqlalchemy.ext.asyncio import AsyncSession
 
@@ -10,6 +10,7 @@ from app.core import security
 from app.core.config import get_settings
 from app.core.logger import AppLogger
 from app.enums import IdentityType
+from app.errors import ApiException
 from app.schemas import user_schema
 
 logger: AppLogger = AppLogger(f"{__name__}")
@@ -95,9 +96,7 @@ async def set_password(
     user = await crud.select_user_by_id(db, user_id)
     if not user:
         logger.error(f"ユーザーが存在しません。(user_id: {user_id})")
-        raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST, detail="不正なリクエストです。"
-        )
+        raise ApiException(status_code=status.HTTP_400_BAD_REQUEST, msg="不正なリクエストです。")
 
     # パスワードをハッシュ化
     hashed_password = security.get_password_hash(password.get_secret_value())
@@ -151,9 +150,9 @@ async def authenticate_user(db: AsyncSession, identity: str, password: str) -> u
     """
 
     # 認証失敗時のエラー定義
-    authentication_exception = HTTPException(
+    authentication_exception = ApiException(
         status_code=status.HTTP_400_BAD_REQUEST,
-        detail="ユーザー名かパスワードが間違っています。",
+        msg="ユーザー名かパスワードが間違っています。",
     )
 
     # 認証情報取得
